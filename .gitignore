@@ -1,0 +1,10 @@
+.svn
+.classpath
+.project
+.idea
+.DS_Store
+/tmp
+/blanco/main
+/blanco.php/main
+/bin
+/classes

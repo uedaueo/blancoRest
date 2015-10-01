@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="BlancoRest" default="build" basedir=".">
+	<property name="version" value="0.0.1" />
+
+	<property name="project" value="blancoRest" />
+	<property name="project.lower" value="blancorest" />
+	<property name="project.zip" value="${project}-${version}-src.zip" />
+	<property name="project.main.jar" value="blancorest-${version}.jar" />
+
+	<property name="encoding" value="UTF-8" />
+	<!-- property name="eclipse.dir" value="C:/eclipse.ve" / -->
+
+	<!-- Antタスク定義 begin -->
+
+	<taskdef name="blancoanttask" classname="blanco.anttask.task.BlancoAntTaskTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<taskdef name="blancoresourcebundle" classname="blanco.resourcebundle.task.BlancoResourceBundleTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<taskdef name="blancometa2xml" classname="blanco.meta2xml.task.BlancoMeta2XmlTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<taskdef name="blancoconstants" classname="blanco.constants.task.BlancoConstantsTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<taskdef name="blancovalueobject" classname="blanco.valueobject.task.BlancoValueObjectTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+		</classpath>
+	</taskdef>
+
+	<!-- Antタスク定義 end -->
+
+	<!-- 自分自身のAntタスク。 -->
+	<taskdef name="blancorest" classname="blanco.rest.task.BlancoRestTask">
+		<classpath>
+			<fileset dir="lib" includes="*.jar" />
+			<fileset dir="lib.ant" includes="*.jar" />
+			<dirset dir="bin" />
+		</classpath>
+	</taskdef>
+
+	<target name="pack">
+		<echo>packing project</echo>
+		<delete file="${project.zip}" />
+		<delete dir="bin" />
+		<delete dir="javadoc" />
+
+		<delete dir="tmp" />
+
+		<copy todir="lib.ant">
+			<fileset dir=".">
+				<include name="${project.lower}-*.jar" />
+			</fileset>
+		</copy>
+
+		<delete>
+			<fileset dir=".">
+				<include name="${project.lower}-*.jar" />
+			</fileset>
+		</delete>
+
+		<zip destfile="${project.zip}">
+			<zipfileset dir="." prefix="${project}" excludes="${project.zip},**/*.class" />
+		</zip>
+
+	</target>
+
+	<target name="jar">
+		<echo>building jar</echo>
+
+		<!-- 定義書読込設定XMLファイル(blancoCalcParserが利用) をコピーします。 -->
+		<copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
+
+		<delete file="${project.main.jar}" />
+		<jar destfile="${project.main.jar}">
+			<zipfileset dir="doc" prefix="doc" />
+			<!-- classの取り込み (※sampleは除外) -->
+			<zipfileset dir="bin" includes="**/*" excludes="blanco/sample/**" />
+			<!-- Javaソースコード(通常)の取り込み (※sampleは除外) -->
+			<zipfileset dir="src" includes="**/*" prefix="src" excludes="blanco/sample/**" />
+			<!-- Javaソースコード(自動生成)の取り込み (※sampleは除外) -->
+			<zipfileset dir="blanco/main" includes="**/*.java" prefix="src" excludes="blanco/sample/**" />
+			<!-- プロパティファイルの取り込み -->
+			<zipfileset dir="blanco/main" includes="**/*.properties" excludes="blanco/sample/**" />
+		</jar>
+	</target>
+
+	<target name="compile">
+		<delete dir="bin" />
+		<mkdir dir="bin" />
+		<javac destdir="bin" debug="true" source="1.8" target="1.8" fork="false" encoding="${encoding}">
+			<src path="blanco/main/" />
+			<src path="src/" />
+			<classpath>
+				<!-- ワイルドカードで一括取り込み -->
+				<fileset dir="lib" includes="*.jar" />
+				<fileset dir="lib.ant" includes="*.jar" />
+				<!-- pathelement path="${eclipse.dir}/plugins/org.junit_3.8.2.v20080602-1318/junit.jar" / -->
+			</classpath>
+			<include name="**/*.java" />
+		</javac>
+	</target>
+
+	<target name="javadoc">
+		<echo>JavaDocを生成します。</echo>
+		<delete dir="javadoc" />
+		<javadoc destdir="javadoc">
+			<fileset dir="src" includes="**/*.java" />
+			<fileset dir="blanco/main" includes="**/*.java" />
+			<classpath>
+				<fileset dir="lib" includes="*.jar" />
+				<fileset dir="lib.ant" includes="*.jar" />
+			</classpath>
+		</javadoc>
+	</target>
+
+	<target name="meta">
+		<blancoresourcebundle metadir="meta/program" tmpdir="tmp" targetdir="blanco" commenttimestamp="false" failonmessageformaterror="false" encoding="${encoding}" />
+		<blancoanttask metadir="meta/program" tmpdir="tmp" targetdir="blanco" encoding="${encoding}" />
+		<blancoconstants metadir="meta/program" targetdir="blanco" encoding="${encoding}" />
+		<blancometa2xml metadir="meta/program" encoding="${encoding}" />
+		<blancovalueobject metadir="meta/program"  encoding="${encoding}" />
+		<blancovalueobject metadir="meta/objects"  encoding="${encoding}" />
+
+		<!-- TODO: ここに自身のantタスクを追加してください。 -->
+        <copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
+		<blancorest metadir="meta/api" targetdir="blanco.php" encoding="${encoding}" />
+	</target>
+
+	<target name="build" depends="meta,compile,jar,pack">
+	</target>
+
+    <target name="cleanblanco">
+        <delete dir="blanco" />
+		<delete dir="tmp" />
+    </target>
+
+    <target name="cleanjava">
+        <delete dir="bin" />
+        <delete dir="classes" />
+		<mkdir dir="bin" />
+    </target>
+
+    <target name="clean" depends="cleanjava, cleanblanco" />
+
+</project>

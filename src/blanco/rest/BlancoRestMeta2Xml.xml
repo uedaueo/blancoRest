@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- blancoCalcParser define file for blancoWsdl -->
+<blanco version="0.1.0">
+    <target name="blancoCalcParser">
+        <blancocalcparser name="wsdl">
+            <propertyblock name="blancotelegram-common" waitY="1">
+                <startstring>電文定義・共通</startstring>
+                <propertykey name="name" waitX="2">
+                    <value>電文ID</value>
+                </propertykey>
+                <propertykey name="description" waitX="2">
+                    <value>説明</value>
+                </propertykey>
+                <propertykey name="type" waitX="2">
+                    <value>電文種類</value>
+                </propertykey>
+                <propertykey name="superClass" waitX="2">
+                    <value>電文の親クラス</value>
+                </propertykey>
+                <propertykey name="namespace" waitX="2">
+                    <value>名前空間</value>
+                </propertykey>
+                <propertykey name="package" waitX="2">
+                    <value>パッケージ</value>
+                </propertykey>
+
+                <valuemapping>
+                    <result>Input</result>
+                    <source>要求電文(C→S)</source>
+                </valuemapping>
+                <valuemapping>
+                    <result>Output</result>
+                    <source>応答電文(S→C)</source>
+                </valuemapping>
+            </propertyblock>
+
+            <tableblock name="blancotelegram-list" waitY="2" titleheight="3" rowname="field">
+                <startstring>電文定義・一覧</startstring>
+
+                <tablecolumn name="no">
+                    <value>No.</value>
+                </tablecolumn>
+                <tablecolumn name="fieldName">
+                    <value>項目名</value>
+                </tablecolumn>
+                <tablecolumn name="fieldDescription">
+                    <value>項目の説明</value>
+                    <value>項目の説明
+                        JavaDocに利用されます</value>
+                </tablecolumn>
+                <tablecolumn name="fieldType">
+                    <value>型</value>
+                </tablecolumn>
+                <tablecolumn name="fieldRequired">
+                    <value>必須</value>
+                </tablecolumn>
+                <tablecolumn name="default">
+                    <value>デフォルト</value>
+                </tablecolumn>
+                <tablecolumn name="minLength">
+                    <value>Min長</value>
+                </tablecolumn>
+                <tablecolumn name="maxLength">
+                    <value>Max長</value>
+                </tablecolumn>
+                <tablecolumn name="minInclusive">
+                    <value>Min値</value>
+                </tablecolumn>
+                <tablecolumn name="maxInclusive">
+                    <value>Max値</value>
+                </tablecolumn>
+                <tablecolumn name="pattern">
+                    <value>正規表現</value>
+                </tablecolumn>
+                <tablecolumn name="fieldBiko">
+                    <value>備考</value>
+                </tablecolumn>
+            </tableblock>
+
+            <propertyblock name="blancotelegramprocess-common" waitY="1">
+                <startstring>電文処理定義・共通</startstring>
+                <propertykey name="name" waitX="1">
+                    <value>電文処理ID</value>
+                </propertykey>
+                <propertykey name="description" waitX="2">
+                    <value>説明</value>
+                </propertykey>
+                <propertykey name="telegramRequestId" waitX="1">
+                    <value>要求電文ID</value>
+                </propertykey>
+                <propertykey name="telegramResponseId" waitX="1">
+                    <value>応答電文ID</value>
+                </propertykey>
+                <propertykey name="noAuthentication" waitX="1">
+                    <value>認証が不要なAPI</value>
+                </propertykey>
+                <propertykey name="webServiceId" waitX="1">
+                    <value>ウェブサービスID</value>
+                </propertykey>
+                <propertykey name="telegramProcessNamespace" waitX="1">
+                    <value>名前空間</value>
+                </propertykey>
+                <propertykey name="package" waitX="1">
+                    <value>パッケージ</value>
+                </propertykey>
+                <propertykey name="location" waitX="1">
+                    <value>ロケーション</value>
+                </propertykey>
+            </propertyblock>
+
+            <tableblock name="blancotelegramprocess-description" waitY="2" titleheight="2" rowname="line">
+                <startstring>電文処理定義・内容</startstring>
+
+                <tablecolumn name="input">
+                    <value>入力</value>
+                </tablecolumn>
+
+                <tablecolumn name="process">
+                    <value>処理</value>
+                </tablecolumn>
+
+                <tablecolumn name="output">
+                    <value>出力</value>
+                </tablecolumn>
+
+            </tableblock>
+
+        </blancocalcparser>
+    </target>
+</blanco>
