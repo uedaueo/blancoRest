@@ -514,13 +514,26 @@ public class BlancoRestXml2SourceFile {
         String requestSubId = requestId;
         String responseId = argStructure.getResponseId();
         String responseSubId = responseId;
+
+        /*
+         * Java 版では引数の型は厳密に指定します．
+         */
+//        for (BlancoRestTelegram telegram : argListTelegrams) {
+////            System.out.println("### type = " + telegram.getTelegramType());
+//            if ("Input".equals(telegram.getTelegramType())) {
+//                requestId = telegram.getTelegramSuperClass();
+//            }
+//            if ("Output".equals(telegram.getTelegramType())) {
+//                responseId = telegram.getTelegramSuperClass();
+//            }
+//        }
         for (BlancoRestTelegram telegram : argListTelegrams) {
 //            System.out.println("### type = " + telegram.getTelegramType());
             if ("Input".equals(telegram.getTelegramType())) {
-                requestId = telegram.getTelegramSuperClass();
+                requestId = telegram.getPackage() + "." + requestId;
             }
             if ("Output".equals(telegram.getTelegramType())) {
-                responseId = telegram.getTelegramSuperClass();
+                responseId = telegram.getPackage() + "." + responseId;
             }
         }
 
@@ -546,13 +559,26 @@ public class BlancoRestXml2SourceFile {
         String requestSubId = requestId;
         String responseId = argStructure.getResponseId();
         String responseSubId = responseId;
+
+        /*
+         * Java 版では引数の型は厳密に指定します．
+         */
+//        for (BlancoRestTelegram telegram : argListTelegrams) {
+////            System.out.println("### type = " + telegram.getTelegramType());
+//            if ("Input".equals(telegram.getTelegramType())) {
+//                requestId = telegram.getTelegramSuperClass();
+//            }
+//            if ("Output".equals(telegram.getTelegramType())) {
+//                responseId = telegram.getTelegramSuperClass();
+//            }
+//        }
         for (BlancoRestTelegram telegram : argListTelegrams) {
 //            System.out.println("### type = " + telegram.getTelegramType());
             if ("Input".equals(telegram.getTelegramType())) {
-                requestId = telegram.getTelegramSuperClass();
+                requestId = telegram.getPackage() + "." + requestId;
             }
             if ("Output".equals(telegram.getTelegramType())) {
-                responseId = telegram.getTelegramSuperClass();
+                responseId = telegram.getPackage() + "." + responseId;
             }
         }
 
@@ -610,6 +636,10 @@ public class BlancoRestXml2SourceFile {
         fCgClass.getMethodList().add(cgRequestIdMethod);
         cgRequestIdMethod.setAccess("protected");
 
+        List<String> annotators = new ArrayList<>();
+        annotators.add("Override");
+        cgRequestIdMethod.setAnnotationList(annotators);
+
         cgRequestIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
                 fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
@@ -617,7 +647,7 @@ public class BlancoRestXml2SourceFile {
         final List<String> listLine = cgRequestIdMethod.getLineList();
 
 
-        listLine.add("return " + "\"" + argStructure.getRequestId() + "\""
+        listLine.add("return " + "\"" + argStructure.getPackage() + "." + argStructure.getRequestId() + "\""
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
@@ -629,6 +659,10 @@ public class BlancoRestXml2SourceFile {
         fCgClass.getMethodList().add(cgResponseIdMethod);
         cgResponseIdMethod.setAccess("protected");
 
+        List<String> annotators = new ArrayList<>();
+        annotators.add("Override");
+        cgResponseIdMethod.setAnnotationList(annotators);
+
         cgResponseIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
                 fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
@@ -636,7 +670,7 @@ public class BlancoRestXml2SourceFile {
         final List<String> listLine = cgResponseIdMethod.getLineList();
 
 
-        listLine.add("return " + "\"" + argStructure.getResponseId() + "\""
+        listLine.add("return " + "\"" + argStructure.getPackage() + "." + argStructure.getResponseId() + "\""
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
@@ -885,7 +919,7 @@ public class BlancoRestXml2SourceFile {
      */
     private void expandMethodToString(
             final BlancoRestTelegram argProcessStructure) {
-        final BlancoCgMethod method = fCgFactory.createMethod("__toString",
+        final BlancoCgMethod method = fCgFactory.createMethod("toString",
                 "このバリューオブジェクトの文字列表現を取得します。");
         fCgClass.getMethodList().add(method);
 
@@ -894,6 +928,10 @@ public class BlancoRestXml2SourceFile {
         method
                 .setReturn(fCgFactory.createReturn("java.lang.String",
                         "バリューオブジェクトの文字列表現。"));
+
+        List<String> annotators = new ArrayList<>();
+        annotators.add("Override");
+        method.setAnnotationList(annotators);
 
         final List<String> listLine = method.getLineList();
 
