@@ -138,8 +138,7 @@
 		<blancoanttask metadir="meta/program" tmpdir="tmp" targetdir="blanco" encoding="${encoding}" />
 		<blancoconstants metadir="meta/program" targetdir="blanco" encoding="${encoding}" />
 		<blancometa2xml metadir="meta/program" encoding="${encoding}" />
-		<blancovalueobject metadir="meta/program"  encoding="${encoding}" />
-		<blancovalueobject metadir="meta/objects"  encoding="${encoding}" />
+		<blancovalueobject metadir="meta/program" targetdir="blanco" encoding="${encoding}" verbose="true" />
 
 		<!-- TODO: ここに自身のantタスクを追加してください。 -->
         <!-- copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
@@ -151,6 +150,7 @@
 
     <target name="cleanblanco">
         <delete dir="blanco" />
+		<delete dir="blanco.java" />
 		<delete dir="tmp" />
     </target>
 

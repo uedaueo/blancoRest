@@ -1,5 +1,6 @@
 package blanco.rest;
 
+import blanco.cg.BlancoCgSupportedLang;
 import blanco.commons.util.BlancoStringUtil;
 import blanco.rest.task.valueobject.BlancoRestProcessInput;
 import blanco.valueobject.BlancoValueObjectConstants;
@@ -8,6 +9,7 @@ import blanco.valueobject.valueobject.BlancoValueObjectClassStructure;
 import blanco.valueobject.valueobject.BlancoValueObjectFieldStructure;
 import blanco.xml.bind.BlancoXmlBindingUtil;
 import blanco.xml.bind.BlancoXmlUnmarshaller;
+import blanco.xml.bind.valueobject.BlancoXmlAttribute;
 import blanco.xml.bind.valueobject.BlancoXmlDocument;
 import blanco.xml.bind.valueobject.BlancoXmlElement;
 
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * BlancoValueObject で作成されているObjectの一覧を XML から取得し，保持しておきます
@@ -25,7 +28,17 @@ public class BlancoRestObjectsInfo {
     /**
      * ValueObject 用リソースバンドルへのアクセスオブジェクト。
      */
-    private final BlancoValueObjectResourceBundle fBundle = new BlancoValueObjectResourceBundle();
+    private final static BlancoValueObjectResourceBundle fBundle = new BlancoValueObjectResourceBundle();
+
+    public static Map<String, Integer> mapCommons = new HashMap<String, Integer>() {
+        {put(fBundle.getMeta2xmlElementCommon(), BlancoCgSupportedLang.JAVA);}
+        {put(fBundle.getMeta2xmlElementCommonCs(), BlancoCgSupportedLang.CS);}
+        {put(fBundle.getMeta2xmlElementCommonJs(), BlancoCgSupportedLang.JS);}
+        {put(fBundle.getMeta2xmlElementCommonVb(), BlancoCgSupportedLang.VB);}
+        {put(fBundle.getMeta2xmlElementCommonPhp(), BlancoCgSupportedLang.PHP);}
+        {put(fBundle.getMeta2xmlElementCommonRuby(), BlancoCgSupportedLang.RUBY);}
+        {put(fBundle.getMeta2xmlElementCommonPython(), BlancoCgSupportedLang.PYTHON);}
+    };
 
     /**
      * フィールド名やメソッド名の名前変形を行うかどうか。
@@ -97,10 +110,34 @@ public class BlancoRestObjectsInfo {
             final BlancoXmlElement elementSheet = (BlancoXmlElement) listSheet
                     .get(index);
 
-            // 共通情報を取得します。
-            final BlancoXmlElement elementCommon = BlancoXmlBindingUtil
-                    .getElement(elementSheet, fBundle
-                            .getMeta2xmlElementCommon());
+             /*
+             * Java以外の言語用に記述されたシートにも対応．
+             */
+            BlancoXmlElement elementCommon = null;
+            int sheetLang = BlancoCgSupportedLang.JAVA;
+            for (String common : mapCommons.keySet()) {
+                // 共通情報を取得します。
+                elementCommon = BlancoXmlBindingUtil
+                        .getElement(elementSheet, common);
+
+                if (elementCommon != null) {
+                    BlancoXmlAttribute attr = new BlancoXmlAttribute();
+                    attr.setType("CDATA");
+                    attr.setQName("style");
+                    attr.setLocalName("style");
+
+                    sheetLang = mapCommons.get(common);
+                    attr.setValue(new BlancoCgSupportedLang().convertToString(sheetLang));
+
+                    elementSheet.getAtts().add(attr);
+
+                    /* tueda DEBUG */
+                    System.out.println("/* tueda */ style = " + BlancoXmlBindingUtil.getAttribute(elementSheet, "style"));
+
+                    break;
+                }
+            }
+
             if (elementCommon == null) {
                 // commonが無い場合には、このシートの処理をスキップします。
                 continue;
@@ -113,9 +150,26 @@ public class BlancoRestObjectsInfo {
                 continue;
             }
 
+            System.out.println("/* tueda */ BlancoRestObjextsInfo className = " + name);
+
             // 一覧情報を取得します。
-            final BlancoXmlElement elementList = BlancoXmlBindingUtil
-                    .getElement(elementSheet, fBundle.getMeta2xmlElementList());
+//            final BlancoXmlElement elementList = BlancoXmlBindingUtil
+//                    .getElement(elementSheet, fBundle.getMeta2xmlElementList());
+             /*
+             * Java以外の言語用に記述されたシートにも対応．
+             */
+            BlancoXmlElement elementList = null;
+            for (String common : mapCommons.keySet()) {
+                if (mapCommons.get(common) == sheetLang) {
+                    elementList = BlancoXmlBindingUtil
+                            .getElement(elementSheet, common);
+                }
+            }
+            if (elementList == null) {
+                // 異常終了（ありえません）
+                System.out.println("/* tueda */ Emergency : No Lang defined.");
+                continue;
+            }
 
             // シートから詳細な情報を取得します。
             final BlancoValueObjectClassStructure processStructure = parseSheet(
@@ -123,6 +177,8 @@ public class BlancoRestObjectsInfo {
 
             if (processStructure != null) {
                 objects.put(name, processStructure);
+            } else {
+                System.out.println("/* tueda */ BlancoRestObjextsInfo processStructure is NULL!!!");
             }
         }
     }

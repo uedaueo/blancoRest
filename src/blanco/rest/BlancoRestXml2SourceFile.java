@@ -20,8 +20,10 @@ import blanco.rest.resourcebundle.BlancoRestResourceBundle;
 import blanco.rest.valueobject.BlancoRestTelegram;
 import blanco.rest.valueobject.BlancoRestTelegramField;
 import blanco.rest.valueobject.BlancoRestTelegramProcess;
+import blanco.valueobject.valueobject.BlancoValueObjectClassStructure;
 import blanco.xml.bind.BlancoXmlBindingUtil;
 import blanco.xml.bind.BlancoXmlUnmarshaller;
+import blanco.xml.bind.valueobject.BlancoXmlAttribute;
 import blanco.xml.bind.valueobject.BlancoXmlDocument;
 import blanco.xml.bind.valueobject.BlancoXmlElement;
 
@@ -48,6 +50,15 @@ public class BlancoRestXml2SourceFile {
      * 出力対象となるプログラミング言語。
      */
     private int fTargetLang = BlancoCgSupportedLang.JAVA;
+
+    /**
+     * 入力シートに期待するプログラミング言語
+     */
+    private int fSheetLang = BlancoCgSupportedLang.JAVA;
+
+    public void setSheetLang(final int argSheetLang) {
+        fSheetLang = argSheetLang;
+    }
 
     /**
      * 内部的に利用するblancoCg用ファクトリ。
@@ -192,8 +203,22 @@ public class BlancoRestXml2SourceFile {
                     .getTextContent(argElementCommon, "description"));
         }
 
-        structure.setRequestId(BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramRequestId"));
-        structure.setResponseId(BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramResponseId"));
+        /*
+         * 入力シートが Java 以外の場合にも対応します．
+         * 現時点では PHP のみです．
+         */
+        String telegramRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramRequestId");
+        String telegramResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramResponseId");
+        switch (fSheetLang) {
+            case BlancoCgSupportedLang.PHP:
+                telegramRequestId = adjustClassNamePhp2Java(telegramRequestId);
+                telegramResponseId = adjustClassNamePhp2Java(telegramResponseId);
+                break;
+            /* 対応言語を増やす場合はここに case を追記します */
+        }
+        structure.setRequestId(telegramRequestId);
+        structure.setResponseId(telegramResponseId);
+
         structure.setLocation(BlancoXmlBindingUtil.getTextContent(argElementCommon, "location"));
 
         structure.setNamespace(BlancoXmlBindingUtil.getTextContent(
@@ -224,7 +249,7 @@ public class BlancoRestXml2SourceFile {
                             .getMeta2xmlTelegramCommon());
             if (elementCommon == null) {
                 // commonが無い場合には、このシートの処理をスキップします。
-                System.out.println("BlancoRestXmlSourceFile#process !!! NO COMMON !!!");
+                // System.out.println("BlancoRestXmlSourceFile#process !!! NO COMMON !!!");
                 continue;
             }
 
@@ -233,11 +258,11 @@ public class BlancoRestXml2SourceFile {
 
             if (BlancoStringUtil.null2Blank(name).trim().length() == 0) {
                 // nameが空の場合には処理をスキップします。
-                System.out.println("BlancoRestXmlSourceFile#process !!! NO NAME !!!");
+                // System.out.println("BlancoRestXmlSourceFile#process !!! NO NAME !!!");
                 continue;
             }
 
-            System.out.println("BlancoRestXmlSourceFile#process name = " + name);
+            System.out.println("/* tueda */ BlancoRestXmlSourceFile#process name = " + name);
 
             // 一覧情報を取得します。
             final BlancoXmlElement elementList = BlancoXmlBindingUtil
@@ -292,8 +317,21 @@ public class BlancoRestXml2SourceFile {
         processTelegram.setTelegramType(BlancoXmlBindingUtil.getTextContent(
                 argElementCommon, "type"));
 
-        processTelegram.setTelegramSuperClass(BlancoXmlBindingUtil.getTextContent(
-                argElementCommon, "superClass"));
+        String superClass = BlancoXmlBindingUtil.getTextContent(
+                argElementCommon, "superClass");
+
+        /*
+         * 入力シートが Java 以外の場合にも対応します．
+         * 現時点では PHP のみです．
+         */
+        switch (fSheetLang) {
+            case BlancoCgSupportedLang.PHP:
+                superClass = adjustClassNamePhp2Java(superClass);
+                break;
+            /* 対応言語を増やす場合はここに case を追記します */
+        }
+
+        processTelegram.setTelegramSuperClass(superClass);
 
         if (argElementList == null) {
             return null;
@@ -336,12 +374,22 @@ public class BlancoRestXml2SourceFile {
                 }
             }
 
-            field.setFieldType(BlancoXmlBindingUtil.getTextContent(elementField,
-                    "fieldType"));
-            if (BlancoStringUtil.null2Blank(field.getFieldType()).length() == 0) {
+            /*
+             * Java 以外のプログラミング言語用に定義された Excel シートに対応
+             * 現時点では PHP のみに対応します
+            */
+            String fieldType = BlancoXmlBindingUtil.getTextContent(elementField,
+                    "fieldType");
+            if (BlancoStringUtil.null2Blank(fieldType).length() == 0) {
                 // ここで異常終了。
                 continue;
             }
+            switch (fSheetLang) {
+                case BlancoCgSupportedLang.PHP:
+                    fieldType = adjustClassNamePhp2Java(fieldType);
+                    break;
+            }
+            field.setFieldType(fieldType);
 
             field.setDescription(BlancoXmlBindingUtil.getTextContent(
                     elementField, "description"));
@@ -424,7 +472,7 @@ public class BlancoRestXml2SourceFile {
         }
 
         // API実装クラスで実装させる abstract method の定義
-        createAbstractMethod(argStructure);
+        createAbstractMethod(argStructure, argListTelegrams);
 
         // base class からの abstract method の実装
         createExecuteMethod(argStructure, argListTelegrams);
@@ -439,13 +487,13 @@ public class BlancoRestXml2SourceFile {
         createResponseIdMethod(argStructure);
 
         // required 文を出力しない ... 将来的には xls で指定するように？
-        fCgSourceFile.setIsImport(false);
+        // fCgSourceFile.setIsImport(false);
 
         BlancoCgTransformerFactory.getSourceTransformer(fTargetLang).transform(
                 fCgSourceFile, fileBlancoMain);
     }
 
-    private void createAbstractMethod(BlancoRestTelegramProcess argStructure) {
+    private void createAbstractMethod(BlancoRestTelegramProcess argStructure, List<BlancoRestTelegram>  argListTelegrams) {
 
         // Initializer の定義
 //        final BlancoCgMethod cgInitializerMethod = fCgFactory.createMethod(
@@ -463,10 +511,21 @@ public class BlancoRestXml2SourceFile {
         cgProcessorMethod.setAbstract(true);
 
         String requestId = argStructure.getRequestId();
+        String requestSubId = requestId;
         String responseId = argStructure.getResponseId();
+        String responseSubId = responseId;
+        for (BlancoRestTelegram telegram : argListTelegrams) {
+//            System.out.println("### type = " + telegram.getTelegramType());
+            if ("Input".equals(telegram.getTelegramType())) {
+                requestId = telegram.getTelegramSuperClass();
+            }
+            if ("Output".equals(telegram.getTelegramType())) {
+                responseId = telegram.getTelegramSuperClass();
+            }
+        }
 
         cgProcessorMethod.getParameterList().add(
-                fCgFactory.createParameter("arg" + requestId, requestId,
+                fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle.getXml2sourceFileProsessorArgLangdoc()));
 
         cgProcessorMethod.setReturn(fCgFactory.createReturn(responseId,
@@ -484,7 +543,9 @@ public class BlancoRestXml2SourceFile {
          * 型チェックを通す為にSuperClassがある場合はそれを使います
          */
         String requestId = argStructure.getRequestId();
+        String requestSubId = requestId;
         String responseId = argStructure.getResponseId();
+        String responseSubId = responseId;
         for (BlancoRestTelegram telegram : argListTelegrams) {
 //            System.out.println("### type = " + telegram.getTelegramType());
             if ("Input".equals(telegram.getTelegramType())) {
@@ -496,7 +557,7 @@ public class BlancoRestXml2SourceFile {
         }
 
         cgExecutorMethod.getParameterList().add(
-                fCgFactory.createParameter("arg" + requestId, requestId,
+                fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle
                                 .getXml2sourceFileExecutorArgLangdoc()));
 
@@ -507,14 +568,14 @@ public class BlancoRestXml2SourceFile {
         final List<String> listLine = cgExecutorMethod.getLineList();
 
         listLine.add(
-                BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseId + " = "
-                        + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "this->" + BlancoRestConstants.API_PROCESS_METHOD
-                        + "( " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestId + " )"
+                responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
+                        + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "this." + BlancoRestConstants.API_PROCESS_METHOD
+                        + "( " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestSubId + " )"
                         + BlancoCgLineUtil.getTerminator(fTargetLang));
 
         listLine.add("\n");
         listLine.add("return "
-                + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseId
+                + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
@@ -525,6 +586,9 @@ public class BlancoRestXml2SourceFile {
                 methodName, fBundle.getXml2sourceFileAuthflagDescription());
         fCgClass.getMethodList().add(cgAuthenticationRequiredMethod);
         cgAuthenticationRequiredMethod.setAccess("protected");
+
+        cgAuthenticationRequiredMethod.setReturn(fCgFactory.createReturn("java.lang.Boolean",
+                fBundle.getXml2sourceFileAuthflagReturnLangdoc()));
 
         // メソッドの実装
         final List<String> listLine = cgAuthenticationRequiredMethod.getLineList();
@@ -541,13 +605,16 @@ public class BlancoRestXml2SourceFile {
     private void createRequestIdMethod(BlancoRestTelegramProcess argStructure) {
         String methodName = BlancoRestConstants.API_REQUESTID_METHOD;
 
-        final BlancoCgMethod cgResponseIdMethod = fCgFactory.createMethod(
+        final BlancoCgMethod cgRequestIdMethod = fCgFactory.createMethod(
                 methodName, fBundle.getXml2sourceFileRequestidDesctiption());
-        fCgClass.getMethodList().add(cgResponseIdMethod);
-        cgResponseIdMethod.setAccess("protected");
+        fCgClass.getMethodList().add(cgRequestIdMethod);
+        cgRequestIdMethod.setAccess("protected");
+
+        cgRequestIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
+                fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
         // メソッドの実装
-        final List<String> listLine = cgResponseIdMethod.getLineList();
+        final List<String> listLine = cgRequestIdMethod.getLineList();
 
 
         listLine.add("return " + "\"" + argStructure.getRequestId() + "\""
@@ -561,6 +628,9 @@ public class BlancoRestXml2SourceFile {
                 methodName, fBundle.getXml2sourceFileRequestidDesctiption());
         fCgClass.getMethodList().add(cgResponseIdMethod);
         cgResponseIdMethod.setAccess("protected");
+
+        cgResponseIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
+                fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
         // メソッドの実装
         final List<String> listLine = cgResponseIdMethod.getLineList();
@@ -598,6 +668,15 @@ public class BlancoRestXml2SourceFile {
         // ApiTelegram クラスを継承
         String telegramBase = argStructure.getTelegramSuperClass();
         if (telegramBase != null) {
+
+            BlancoValueObjectClassStructure objectClassStructure =
+                    BlancoRestObjectsInfo.objects.get(telegramBase);
+
+            String packageName = null;
+            if (objectClassStructure != null && (packageName = objectClassStructure.getPackage()) != null) {
+                telegramBase = packageName + "." + telegramBase;
+            }
+
             BlancoCgType fCgType = new BlancoCgType();
             fCgType.setName(telegramBase);
 
@@ -711,7 +790,7 @@ public class BlancoRestXml2SourceFile {
         final List<String> listLine = cgMethod.getLineList();
 
         listLine.add(BlancoCgLineUtil.getVariablePrefix(fTargetLang)
-                + "this->f" + fieldName + " = "
+                + "this.f" + fieldName + " = "
                 + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg"
                 + fieldName + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
@@ -752,7 +831,7 @@ public class BlancoRestXml2SourceFile {
         listLine
                 .add("return "
                         + BlancoCgLineUtil.getVariablePrefix(fTargetLang)
-                        + "this->" + "f" + fieldName
+                        + "this." + "f" + fieldName
                         + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
@@ -778,9 +857,9 @@ public class BlancoRestXml2SourceFile {
         cgMethod.setStatic(true);
 
         cgMethod.getLangDoc().getDescriptionList().add(
-                fBundle.getXml2sourceFileTypeLangdoc02(fieldLook.getFieldType()));
+                fBundle.getXml2sourceFileTypeLangdoc02("java.lang.String"));
 
-        cgMethod.setReturn(fCgFactory.createReturn(fieldLook.getFieldType(), fBundle
+        cgMethod.setReturn(fCgFactory.createReturn("java.lang.String", fBundle
                 .getXml2sourceFileTypeReturnLangdoc(fieldLook.getName())));
 
         if (BlancoStringUtil.null2Blank(fieldLook.getDescription()).length() > 0) {
@@ -792,9 +871,11 @@ public class BlancoRestXml2SourceFile {
         final List<String> listLine = cgMethod.getLineList();
 
         listLine
-                .add("return "
-                        + "\"" + fieldLook.getFieldType() + "\""
-                        + BlancoCgLineUtil.getTerminator(fTargetLang));
+                .add("return " +
+                        BlancoCgLineUtil.getStringLiteralEnclosure(BlancoCgSupportedLang.JAVA) +
+                                fieldLook.getFieldType() +
+                                BlancoCgLineUtil.getStringLiteralEnclosure(BlancoCgSupportedLang.JAVA) +
+                                BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
     /**
@@ -811,13 +892,13 @@ public class BlancoRestXml2SourceFile {
         method.getLangDoc().getDescriptionList().add(
                 "オブジェクトのシャロー範囲でしかtoStringされない点に注意して利用してください。");
         method
-                .setReturn(fCgFactory.createReturn("string",
+                .setReturn(fCgFactory.createReturn("java.lang.String",
                         "バリューオブジェクトの文字列表現。"));
 
         final List<String> listLine = method.getLineList();
 
         listLine.add(BlancoCgLineUtil.getVariableDeclaration(fTargetLang,
-                "buf", "string", BlancoCgLineUtil
+                "buf", "java.lang.String", BlancoCgLineUtil
                         .getStringLiteralEnclosure(fTargetLang)
                         + BlancoCgLineUtil
                         .getStringLiteralEnclosure(fTargetLang))
@@ -861,17 +942,17 @@ public class BlancoRestXml2SourceFile {
                         + BlancoCgLineUtil
                                 .getStringConcatenationOperator(fTargetLang)
                         + " ";
-                if (fieldLook.getFieldType().equals("string")) {
+                if (fieldLook.getFieldType().equals("java.lang.String")) {
                     strLine += BlancoCgLineUtil.getVariablePrefix(fTargetLang)
-                            + "this->f" + fieldName;
+                            + "this.f" + fieldName;
                 } else if (fieldLook.getFieldType().equals("boolean")) {
                     strLine += "("
                             + BlancoCgLineUtil.getVariablePrefix(fTargetLang)
-                            + "this->f" + fieldName + " ? 'true' : 'false')";
+                            + "this.f" + fieldName + " ? 'true' : 'false')";
                 } else {
-                    strLine += "(string) "
+                    strLine += " "
                             + BlancoCgLineUtil.getVariablePrefix(fTargetLang)
-                            + "this->f" + fieldName;
+                            + "this.f" + fieldName;
                 }
                 strLine += BlancoCgLineUtil.getTerminator(fTargetLang);
                 listLine.add(strLine);
@@ -889,5 +970,54 @@ public class BlancoRestXml2SourceFile {
         listLine.add("return "
                 + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "buf"
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
+    }
+
+    /**
+     * PHP 用に作成されたExcelシートに定義されたクラス名にパッケージ名を付加します
+     * @param phpType
+     * @return
+     */
+    private String adjustClassNamePhp2Java(String phpType) {
+                /*
+                 * 型の取得．ここで Java 風の型名に変えておく
+                 */
+
+        System.out.println("/* tueda */ adjustClassNamePhp2Java: " + phpType);
+        String javaType = phpType;
+        if ("boolean".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.Boolean";
+        } else
+        if ("integer".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.Integer";
+        } else
+        if ("double".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.Double";
+        } else
+        if ("float".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.Double";
+        } else
+        if ("string".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.String";
+        } else
+        if ("array".equalsIgnoreCase(phpType)) {
+            javaType = "java.util.ArrayList<?>";
+        } else
+        if ("object".equalsIgnoreCase(phpType)) {
+            javaType = "java.lang.Object";
+        } else {
+                    /* この名前の package を探す */
+            BlancoValueObjectClassStructure structure = BlancoRestObjectsInfo.objects.get(phpType);
+            if (structure != null) {
+                String packageName = structure.getPackage();
+                if (packageName != null) {
+                    javaType = packageName + "." + phpType;
+                }
+            }
+                    /* その他はそのまま記述する */
+            System.out.println("/* tueda */ Unknown php type: " + javaType);
+        }
+        System.out.println("/* tueda */ adjustClassNamePhp2Java: " + javaType);
+
+        return javaType;
     }
 }

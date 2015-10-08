@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import javax.xml.transform.TransformerException;
 
+import blanco.cg.BlancoCgSupportedLang;
 import blanco.rest.BlancoRestConstants;
 import blanco.rest.BlancoRestMeta2Xml;
 import blanco.rest.BlancoRestObjectsInfo;
@@ -36,7 +37,7 @@ public class BlancoRestProcessImpl implements
      */
     public int execute(final BlancoRestProcessInput input) {
         System.out.println("- " + BlancoRestConstants.PRODUCT_NAME
-                + " (" + BlancoRestConstants.VERSION + ")");
+                + " (" + BlancoRestConstants.VERSION + ")" + " for " + input.getSheetType());
 
         try {
             final File fileMetadir = new File(input.getMetadir());
@@ -74,6 +75,7 @@ public class BlancoRestProcessImpl implements
 
                 final BlancoRestXml2SourceFile xml2source = new BlancoRestXml2SourceFile();
                 xml2source.setEncoding(input.getEncoding());
+                xml2source.setSheetLang(new BlancoCgSupportedLang().convertToInt(input.getSheetType()));
                 xml2source.process(fileMeta2[index], "true".equals(input
                         .getNameAdjust()), new File(input.getTargetdir()));
             }
