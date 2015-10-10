@@ -4,7 +4,9 @@
 .idea
 .DS_Store
 /tmp
+/tmp2
 /blanco/main
+/blanco.java/main
 /blanco.php/main
 /bin
 /classes

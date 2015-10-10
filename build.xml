@@ -109,6 +109,7 @@
 		<mkdir dir="bin" />
 		<javac destdir="bin" debug="true" source="1.8" target="1.8" fork="false" encoding="${encoding}">
 			<src path="blanco/main/" />
+            <src path="blanco.java/main/" />
 			<src path="src/" />
 			<src path="src.main/" />
 			<classpath>
@@ -135,16 +136,18 @@
 	</target>
 
 	<target name="meta">
+		<!--
 		<blancoresourcebundle metadir="meta/program" tmpdir="tmp" targetdir="blanco" commenttimestamp="false" failonmessageformaterror="false" encoding="${encoding}" />
 		<blancoanttask metadir="meta/program" tmpdir="tmp" targetdir="blanco" encoding="${encoding}" />
 		<blancoconstants metadir="meta/program" targetdir="blanco" encoding="${encoding}" />
 		<blancometa2xml metadir="meta/program" encoding="${encoding}" />
 		<blancovalueobject metadir="meta/program" targetdir="blanco" encoding="${encoding}" />
+		-->
 
 		<!-- TODO: ここに自身のantタスクを追加してください。 -->
-        <copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
-		<blancovalueobject metadir="meta/objects" targetdir="blanco" encoding="${encoding}" />
-		<blancorest metadir="meta/api" targetdir="blanco" encoding="${encoding}" sheetType="php" />
+		<copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
+		<blancovalueobject metadir="meta/objects" tmpdir="tmp2" targetdir="blanco.java" encoding="${encoding}" />
+		<blancorest metadir="meta/api" tmpdir="tmp2" targetdir="blanco.java" encoding="${encoding}" sheetType="php" />
 	</target>
 
 	<target name="build" depends="meta,compile,jar,pack">
@@ -154,6 +157,7 @@
         <delete dir="blanco" />
 		<delete dir="blanco.java" />
 		<delete dir="tmp" />
+        <delete dir="tmp2" />
     </target>
 
     <target name="cleanjava">
