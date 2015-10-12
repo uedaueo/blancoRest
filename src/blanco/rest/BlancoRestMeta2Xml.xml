@@ -51,6 +51,9 @@
                 <tablecolumn name="fieldType">
                     <value>型</value>
                 </tablecolumn>
+                <tablecolumn name="fieldGeneric">
+                    <value>総称型</value>
+                </tablecolumn>
                 <tablecolumn name="fieldRequired">
                     <value>必須</value>
                 </tablecolumn>

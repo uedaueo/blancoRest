@@ -23,7 +23,6 @@ import blanco.rest.valueobject.BlancoRestTelegramProcess;
 import blanco.valueobject.valueobject.BlancoValueObjectClassStructure;
 import blanco.xml.bind.BlancoXmlBindingUtil;
 import blanco.xml.bind.BlancoXmlUnmarshaller;
-import blanco.xml.bind.valueobject.BlancoXmlAttribute;
 import blanco.xml.bind.valueobject.BlancoXmlDocument;
 import blanco.xml.bind.valueobject.BlancoXmlElement;
 
@@ -211,8 +210,8 @@ public class BlancoRestXml2SourceFile {
         String telegramResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramResponseId");
         switch (fSheetLang) {
             case BlancoCgSupportedLang.PHP:
-                telegramRequestId = adjustClassNamePhp2Java(telegramRequestId);
-                telegramResponseId = adjustClassNamePhp2Java(telegramResponseId);
+                telegramRequestId = adjustClassNamePhp2Java(telegramRequestId, null);
+                telegramResponseId = adjustClassNamePhp2Java(telegramResponseId, null);
                 break;
             /* 対応言語を増やす場合はここに case を追記します */
         }
@@ -326,7 +325,7 @@ public class BlancoRestXml2SourceFile {
          */
         switch (fSheetLang) {
             case BlancoCgSupportedLang.PHP:
-                superClass = adjustClassNamePhp2Java(superClass);
+                superClass = adjustClassNamePhp2Java(superClass, null);
                 break;
             /* 対応言語を増やす場合はここに case を追記します */
         }
@@ -384,9 +383,16 @@ public class BlancoRestXml2SourceFile {
                 // ここで異常終了。
                 continue;
             }
+
+            String fieldGeneric = BlancoXmlBindingUtil.getTextContent(elementField,
+                    "fieldGeneric");
+            if (BlancoStringUtil.null2Blank(fieldGeneric).length() != 0) {
+                fieldGeneric = adjustClassNamePhp2Java(fieldGeneric, null);
+            }
+
             switch (fSheetLang) {
                 case BlancoCgSupportedLang.PHP:
-                    fieldType = adjustClassNamePhp2Java(fieldType);
+                    fieldType = adjustClassNamePhp2Java(fieldType, fieldGeneric);
                     break;
             }
             field.setFieldType(fieldType);
@@ -1013,9 +1019,10 @@ public class BlancoRestXml2SourceFile {
     /**
      * PHP 用に作成されたExcelシートに定義されたクラス名にパッケージ名を付加します
      * @param phpType
+     * @param generics
      * @return
      */
-    private String adjustClassNamePhp2Java(String phpType) {
+    private String adjustClassNamePhp2Java(String phpType, String generics) {
                 /*
                  * 型の取得．ここで Java 風の型名に変えておく
                  */
@@ -1038,7 +1045,11 @@ public class BlancoRestXml2SourceFile {
             javaType = "java.lang.String";
         } else
         if ("array".equalsIgnoreCase(phpType)) {
-            javaType = "java.util.ArrayList<?>";
+            if (generics == null) {
+                javaType = "java.util.ArrayList<?>";
+            } else {
+                javaType = "java.util.ArrayList<" + generics + ">";
+            }
         } else
         if ("object".equalsIgnoreCase(phpType)) {
             javaType = "java.lang.Object";

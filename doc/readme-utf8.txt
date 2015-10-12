@@ -5,7 +5,9 @@ blancoRestPhp はPHP によるRestful APIを生成するためのツールです
   - ant -f task.xml clean で一時ファイルは全てクリーンされます
   - ant -f task.xml meta で最低限必要な Java ソースを生成します（一回目はエラーになりますが気にしないで下さい）
   - ant -f task.xml compile で必要な Java ソースをコンパイルします
-  - 再度 ant meta または ant build で php ソースコードを生成します
+  - ant meta
+  - ant compile
+  - ant jar : ここで作成されたjarファイルを各プロジェクトで使用します．
 
 [開発者]
  1.うえだうえお(tueda)
