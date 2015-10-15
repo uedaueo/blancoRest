@@ -464,7 +464,7 @@ public class BlancoRestXml2SourceFile {
         // ApiBase クラスを継承
         BlancoCgType fCgType = new BlancoCgType();
         fCgType.setName(BlancoRestConstants.BASE_CLASS);
-        fCgClass.setExtendClassList(new ArrayList<>());
+        fCgClass.setExtendClassList(new ArrayList<BlancoCgType>());
         fCgClass.getExtendClassList().add(fCgType);
 
         // abstrac フラグをセット
@@ -720,7 +720,7 @@ public class BlancoRestXml2SourceFile {
             BlancoCgType fCgType = new BlancoCgType();
             fCgType.setName(telegramBase);
 
-            fCgClass.setExtendClassList(new ArrayList<>());
+            fCgClass.setExtendClassList(new ArrayList<BlancoCgType>());
             fCgClass.getExtendClassList().add(fCgType);
 
         }
