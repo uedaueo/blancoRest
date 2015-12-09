@@ -780,6 +780,13 @@ public class BlancoRestXml2SourceFile {
             fieldName = BlancoNameAdjuster.toClassName(fieldName);
         }
 
+        switch (fSheetLang) {
+            case BlancoCgSupportedLang.PHP:
+                if (fieldLook.getFieldType() == "java.lang.Integer") fieldLook.setFieldType("java.lang.Long");
+                break;
+            /* 対応言語を増やす場合はここに case を追記します */
+        }
+
         final BlancoCgField cgField = fCgFactory.createField("f" + fieldName,
                 fieldLook.getFieldType(), "");
         fCgClass.getFieldList().add(cgField);
