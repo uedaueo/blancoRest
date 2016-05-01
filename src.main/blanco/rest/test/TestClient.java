@@ -23,7 +23,7 @@ public class TestClient {
 
         RestSampleRequest request = new RestSampleRequest();
         request.setField1("Field1 Test");
-        request.setField2(999);
+        request.setField2(999L);
         request.setField3(false);
         request.setField4(9.9999);
         ObjectSample obj00 = new ObjectSample();
