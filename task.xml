@@ -152,6 +152,7 @@
         <delete dir="blanco" />
 		<delete dir="blanco.java" />
 		<delete dir="tmp" />
+		<delete dir="tmp2" />
     </target>
 
     <target name="cleanjava">
