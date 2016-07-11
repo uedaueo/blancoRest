@@ -2,9 +2,8 @@ package blanco.rest.test;
 
 import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.api.TelegramSample;
-import blanco.sample.restphp.RestSampleRequest;
-import blanco.sample.restphp.RestSampleResponse;
-import blanco.sample.valueobject.ObjectSample;
+import blanco.sample.restphp.*;
+import blanco.sample.valueobject.*;
 
 import java.util.ArrayList;
 
@@ -21,6 +20,7 @@ public class TestClient {
 
     public void doTest() {
 
+        /*
         RestSampleRequest request = new RestSampleRequest();
         request.setField1("Field1 Test");
         request.setField2(999L);
@@ -47,6 +47,7 @@ public class TestClient {
         }
 
         System.out.println(response);
+        */
 
     }
 

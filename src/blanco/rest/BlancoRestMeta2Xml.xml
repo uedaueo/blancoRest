@@ -14,6 +14,9 @@
                 <propertykey name="type" waitX="2">
                     <value>電文種類</value>
                 </propertykey>
+                <propertykey name="telegramMethod" waitX="2">
+                    <value>電文のMETHOD</value>
+                </propertykey>
                 <propertykey name="superClass" waitX="2">
                     <value>電文の親クラス</value>
                 </propertykey>
@@ -88,11 +91,29 @@
                 <propertykey name="description" waitX="2">
                     <value>説明</value>
                 </propertykey>
-                <propertykey name="telegramRequestId" waitX="1">
-                    <value>要求電文ID</value>
+                <propertykey name="telegramGetRequestId" waitX="1">
+                    <value>要求電文ID（GETメソッド）</value>
                 </propertykey>
-                <propertykey name="telegramResponseId" waitX="1">
-                    <value>応答電文ID</value>
+                <propertykey name="telegramGetResponseId" waitX="1">
+                    <value>応答電文ID（GETメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramPostRequestId" waitX="1">
+                    <value>要求電文ID（POSTメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramPostResponseId" waitX="1">
+                    <value>応答電文ID（POSTメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramPutRequestId" waitX="1">
+                    <value>要求電文ID（PUTメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramPutResponseId" waitX="1">
+                    <value>応答電文ID（PUTメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramDeleteRequestId" waitX="1">
+                    <value>要求電文ID（DELETEメソッド）</value>
+                </propertykey>
+                <propertykey name="telegramDeleteResponseId" waitX="1">
+                    <value>応答電文ID（DELETEメソッド）</value>
                 </propertykey>
                 <propertykey name="noAuthentication" waitX="1">
                     <value>認証が不要なAPI</value>

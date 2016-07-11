@@ -19,8 +19,14 @@ abstract public class ApiBase {
     /*
      * 自動生成された API クラスで override されます
      */
-    abstract protected String getRequestId();
-    abstract protected String getResponseId();
+    abstract protected String getGetRequestId();
+    abstract protected String getGetResponseId();
+    abstract protected String getPostRequestId();
+    abstract protected String getPostResponseId();
+    abstract protected String getPutRequestId();
+    abstract protected String getPutResponseId();
+    abstract protected String getDeleteRequestId();
+    abstract protected String getDeleteResponseId();
 
     final public ApiTelegram send(ApiTelegram request) throws BlancoRestException {
         ApiTelegram response = null;
@@ -31,10 +37,10 @@ abstract public class ApiBase {
             );
         }
 
-        if (!this.getRequestId().equalsIgnoreCase(request.getClass().getCanonicalName())) {
+        if (!this.getGetRequestId().equalsIgnoreCase(request.getClass().getCanonicalName())) {
             throw new BlancoRestException(
                     fBundle.getBlancorestErrorMsg02(
-                            this.getRequestId(), request.getClass().getCanonicalName())
+                            this.getGetRequestId(), request.getClass().getCanonicalName())
             );
         }
 
@@ -54,7 +60,7 @@ abstract public class ApiBase {
     final public ApiTelegram getDummyResponse() {
         ApiTelegram response = null;
 
-        String responseId = this.getResponseId();
+        String responseId = this.getGetResponseId();
 
         Class<?> clazz;
         try {

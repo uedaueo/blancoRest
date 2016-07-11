@@ -40,6 +40,21 @@ import java.util.List;
  * @author tueda
  */
 public class BlancoRestXml2SourceFile {
+
+    /**
+     * HTTPメソッド名のint表現
+     */
+    private static final int HTTP_METHOD_GET = 0;
+    private static final int HTTP_METHOD_POST = 1;
+    private static final int HTTP_METHOD_PUT = 2;
+    private static final int HTTP_METHOD_DELETE = 3;
+
+    /**
+     * INPUT,OUTPUTのint表現
+     */
+    private static final int TELEGRAM_INPUT = 0;
+    private static final int TELEGRAM_OUTPUT = 1;
+
     /**
      * このプロダクトのリソースバンドルへのアクセスオブジェクト。
      */
@@ -131,14 +146,14 @@ public class BlancoRestXml2SourceFile {
         }
 
         // まずは電文を生成します．
-        ArrayList<BlancoRestTelegram> listTelegram = new ArrayList<>();
+        BlancoRestTelegram listTelegram[][] = new BlancoRestTelegram[4][2];
         processTelegram(argDirectoryTarget, elementRoot, listTelegram);
 
         // 次に電文処理を生成します
         processTelegramProcess(argDirectoryTarget, elementRoot, listTelegram);
     }
 
-    private void processTelegramProcess(final File argDirectoryTarget, BlancoXmlElement elementRoot, List<BlancoRestTelegram> argListTelegrams) {
+    private void processTelegramProcess(final File argDirectoryTarget, BlancoXmlElement elementRoot, BlancoRestTelegram[][] argListTelegrams) {
         // sheet(Excelシート)のリストを取得します。
         final List<BlancoXmlElement> listSheet = BlancoXmlBindingUtil
                 .getElementsByTagName(elementRoot, "sheet");
@@ -206,17 +221,35 @@ public class BlancoRestXml2SourceFile {
          * 入力シートが Java 以外の場合にも対応します．
          * 現時点では PHP のみです．
          */
-        String telegramRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramRequestId");
-        String telegramResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramResponseId");
+        String telegramGetRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramGetRequestId");
+        String telegramGetResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramGetResponseId");
+        String telegramPutRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramPutRequestId");
+        String telegramPutResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramPutResponseId");
+        String telegramPostRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramPostRequestId");
+        String telegramPostResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramPostResponseId");
+        String telegramDeleteRequestId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramDeleteRequestId");
+        String telegramDeleteResponseId = BlancoXmlBindingUtil.getTextContent(argElementCommon, "telegramDeleteResponseId");
         switch (fSheetLang) {
             case BlancoCgSupportedLang.PHP:
-                telegramRequestId = adjustClassNamePhp2Java(telegramRequestId, null);
-                telegramResponseId = adjustClassNamePhp2Java(telegramResponseId, null);
+                telegramGetRequestId = adjustClassNamePhp2Java(telegramGetRequestId, null);
+                telegramGetResponseId = adjustClassNamePhp2Java(telegramGetResponseId, null);
+                telegramPutRequestId = adjustClassNamePhp2Java(telegramPutRequestId, null);
+                telegramPutResponseId = adjustClassNamePhp2Java(telegramPutResponseId, null);
+                telegramPostRequestId = adjustClassNamePhp2Java(telegramPostRequestId, null);
+                telegramPostResponseId = adjustClassNamePhp2Java(telegramPostResponseId, null);
+                telegramDeleteRequestId = adjustClassNamePhp2Java(telegramDeleteRequestId, null);
+                telegramDeleteResponseId = adjustClassNamePhp2Java(telegramDeleteResponseId, null);
                 break;
             /* 対応言語を増やす場合はここに case を追記します */
         }
-        structure.setRequestId(telegramRequestId);
-        structure.setResponseId(telegramResponseId);
+        structure.setGetRequestId(telegramGetRequestId);
+        structure.setGetResponseId(telegramGetResponseId);
+        structure.setPutRequestId(telegramPutRequestId);
+        structure.setPutResponseId(telegramPutResponseId);
+        structure.setPostRequestId(telegramPostRequestId);
+        structure.setPostResponseId(telegramPostResponseId);
+        structure.setDeleteRequestId(telegramDeleteRequestId);
+        structure.setDeleteResponseId(telegramDeleteResponseId);
 
         structure.setLocation(BlancoXmlBindingUtil.getTextContent(argElementCommon, "location"));
 
@@ -231,7 +264,7 @@ public class BlancoRestXml2SourceFile {
         return structure;
     }
 
-    private void processTelegram(final File argDirectoryTarget, BlancoXmlElement elementRoot, List<BlancoRestTelegram> argListTelegrams) {
+    private void processTelegram(final File argDirectoryTarget, BlancoXmlElement elementRoot, BlancoRestTelegram[][] argListTelegrams) {
 
         // sheet(Excelシート)のリストを取得します。
         final List<BlancoXmlElement> listSheet = BlancoXmlBindingUtil
@@ -271,10 +304,54 @@ public class BlancoRestXml2SourceFile {
             final BlancoRestTelegram processTelegram = parseTelegramSheet(
                     elementCommon, elementList);
 
+            // 電文をHTTPメソッド×IN-OUTの2次元配列に格納する
             if (processTelegram != null) {
                 // メタ情報の解析結果をもとにソースコード自動生成を実行します。
                 process(processTelegram, argDirectoryTarget);
-                argListTelegrams.add(processTelegram);
+
+                //System.out.println("/* KINOKO DEBUG */ METHOD: " + processTelegram.getTelegramMethod());
+                //System.out.println("/* KINOKO DEBUG */ TYPE: " + processTelegram.getTelegramType());
+                if("GET".equals(processTelegram.getTelegramMethod())) {
+                    if ("Input".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_GET][TELEGRAM_INPUT] = processTelegram;
+                    }
+                    if ("Output".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_GET][TELEGRAM_OUTPUT] = processTelegram;
+                    }
+                } else if("POST".equals(processTelegram.getTelegramMethod())) {
+                    if ("Input".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_POST][TELEGRAM_INPUT] = processTelegram;
+                    }
+                    if ("Output".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_POST][TELEGRAM_OUTPUT] = processTelegram;
+                    }
+                } else if("PUT".equals(processTelegram.getTelegramMethod())) {
+                    if ("Input".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_PUT][TELEGRAM_INPUT] = processTelegram;
+                    }
+                    if ("Output".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_PUT][TELEGRAM_OUTPUT] = processTelegram;
+                    }
+                } else if("DELETE".equals(processTelegram.getTelegramMethod())) {
+                    if ("Input".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_DELETE][TELEGRAM_INPUT] = processTelegram;
+                    }
+                    if ("Output".equals(processTelegram.getTelegramType())) {
+                        argListTelegrams[HTTP_METHOD_DELETE][TELEGRAM_OUTPUT] = processTelegram;
+                    }
+                }
+            }
+        }
+
+        /**
+         *  InputとOutputが対になっているかのチェックを行う
+         *  対になっていない場合、メッセージを出力した後両方にnullを入れる
+         */
+        for(int i = 0; i < 4; i++) {
+            if((argListTelegrams[i][TELEGRAM_INPUT] == null) ^ (argListTelegrams[i][TELEGRAM_OUTPUT] == null)) {
+                argListTelegrams[i][TELEGRAM_INPUT] = null;
+                argListTelegrams[i][TELEGRAM_OUTPUT] = null;
+                System.out.println("/* KINOKO */ 電文のINPUTとOUTPUTが揃っていません");
             }
         }
     }
@@ -318,6 +395,9 @@ public class BlancoRestXml2SourceFile {
 
         String superClass = BlancoXmlBindingUtil.getTextContent(
                 argElementCommon, "superClass");
+
+        processTelegram.setTelegramMethod(BlancoXmlBindingUtil.getTextContent(
+                argElementCommon, "telegramMethod"));
 
         /*
          * 入力シートが Java 以外の場合にも対応します．
@@ -446,7 +526,7 @@ public class BlancoRestXml2SourceFile {
      */
     public void process(
             final BlancoRestTelegramProcess argStructure,
-            final List<BlancoRestTelegram> argListTelegrams,
+            final BlancoRestTelegram[][] argListTelegrams,
             final File argDirectoryTarget) {
 
         // 従来と互換性を持たせるため、/mainサブフォルダに出力します。
@@ -477,29 +557,76 @@ public class BlancoRestXml2SourceFile {
                     .getDescription());
         }
 
-        // API実装クラスで実装させる abstract method の定義
-        createAbstractMethod(argStructure, argListTelegrams);
+        final String methodName[][] = new String[4][2];
+        methodName[HTTP_METHOD_GET][TELEGRAM_INPUT] = BlancoRestConstants.API_GET_REQUESTID_METHOD;
+        methodName[HTTP_METHOD_GET][TELEGRAM_OUTPUT] = BlancoRestConstants.API_GET_RESPONSEID_METHOD;
+        methodName[HTTP_METHOD_POST][TELEGRAM_INPUT] = BlancoRestConstants.API_POST_REQUESTID_METHOD;
+        methodName[HTTP_METHOD_POST][TELEGRAM_OUTPUT] = BlancoRestConstants.API_POST_RESPONSEID_METHOD;
+        methodName[HTTP_METHOD_PUT][TELEGRAM_INPUT] = BlancoRestConstants.API_PUT_REQUESTID_METHOD;
+        methodName[HTTP_METHOD_PUT][TELEGRAM_OUTPUT] = BlancoRestConstants.API_PUT_RESPONSEID_METHOD;
+        methodName[HTTP_METHOD_DELETE][TELEGRAM_INPUT] = BlancoRestConstants.API_DELETE_REQUESTID_METHOD;
+        methodName[HTTP_METHOD_DELETE][TELEGRAM_OUTPUT] = BlancoRestConstants.API_DELETE_RESPONSEID_METHOD;
 
-        // base class からの abstract method の実装
-        createExecuteMethod(argStructure, argListTelegrams);
+        final String requestIdName[] = new String[4];
+        requestIdName[HTTP_METHOD_GET] = argStructure.getGetRequestId();
+        requestIdName[HTTP_METHOD_POST] = argStructure.getPostRequestId();
+        requestIdName[HTTP_METHOD_PUT] = argStructure.getPutRequestId();
+        requestIdName[HTTP_METHOD_DELETE] = argStructure.getDeleteRequestId();
+
+        final String responseIdName[] = new String[4];
+        responseIdName[HTTP_METHOD_GET] = argStructure.getGetResponseId();
+        responseIdName[HTTP_METHOD_POST] = argStructure.getPostResponseId();
+        responseIdName[HTTP_METHOD_PUT] = argStructure.getPutResponseId();
+        responseIdName[HTTP_METHOD_DELETE] = argStructure.getDeleteResponseId();
+
+        /*デバッグのためのDUMP*/
+//        System.out.println("========");
+//        for(int i = 0; i < 4; i++) {
+//            if(argListTelegrams[i][0] != null) {
+//                System.out.println("/* KINOKO DEBUG */ METHOD: " + argListTelegrams[i][0].getTelegramMethod());
+//                System.out.println("/* KINOKO DEBUG */ TYPE: " + argListTelegrams[i][0].getTelegramType());
+//            }
+//            if(argListTelegrams[i][1] != null) {
+//                System.out.println("/* KINOKO DEBUG */ METHOD: " + argListTelegrams[i][1].getTelegramMethod());
+//                System.out.println("/* KINOKO DEBUG */ TYPE: " + argListTelegrams[i][1].getTelegramType());
+//            }
+//        }
+
+        /* ここからはAPIメソッドごとの生成 */
+        for(int i = 0; i < 4; i++) {
+            BlancoRestTelegram input = argListTelegrams[i][TELEGRAM_INPUT];
+            BlancoRestTelegram output = argListTelegrams[i][TELEGRAM_OUTPUT];
+
+            if ((argListTelegrams[i][TELEGRAM_INPUT] != null) && (argListTelegrams[i][TELEGRAM_OUTPUT] != null)) {
+                //System.out.println("(process)### method = " + output.getTelegramMethod());
+                // API実装クラスで実装させる abstract method の定義
+                createAbstractMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
+                // base class からの abstract method の実装
+                createExecuteMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
+            }
+        }
+        /* getter, setterがまとまるように、process, executeとは別にfor文を回す
+         * 単に見た目の問題
+         */
+        for(int i = 0; i < 4; i++) {
+            // abstractなメソッドは定義されているかにかかわらずメソッドを記述する
+            // RequestId 名を取得する メソッド
+            createRequestIdMethod(methodName[i][TELEGRAM_INPUT], requestIdName[i], argStructure.getPackage());
+            // ResponseId 名を取得する メソッド
+            createResponseIdMethod(methodName[i][TELEGRAM_OUTPUT], responseIdName[i], argStructure.getPackage());
+        }
 
         // isAuthenticationRequired メソッドの上書き
         overrideAuthenticationRequired(argStructure);
 
-        // RequestId 名を取得する メソッド
-        createRequestIdMethod(argStructure);
-
-        // ResponseId 名を取得する メソッド
-        createResponseIdMethod(argStructure);
-
         // required 文を出力しない ... 将来的には xls で指定するように？
-        // fCgSourceFile.setIsImport(false);
+         //fCgSourceFile.setIsImport(false);
 
         BlancoCgTransformerFactory.getSourceTransformer(fTargetLang).transform(
                 fCgSourceFile, fileBlancoMain);
     }
 
-    private void createAbstractMethod(BlancoRestTelegramProcess argStructure, List<BlancoRestTelegram>  argListTelegrams) {
+    private void createAbstractMethod(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
 
         // Initializer の定義
 //        final BlancoCgMethod cgInitializerMethod = fCgFactory.createMethod(
@@ -512,14 +639,11 @@ public class BlancoRestXml2SourceFile {
         // Processor の定義
         final BlancoCgMethod cgProcessorMethod = fCgFactory.createMethod(
                 BlancoRestConstants.API_PROCESS_METHOD, fBundle.getXml2sourceFileProcessorDescription());
+
         fCgClass.getMethodList().add(cgProcessorMethod);
         cgProcessorMethod.setAccess("protected");
         cgProcessorMethod.setAbstract(true);
 
-        String requestId = argStructure.getRequestId();
-        String requestSubId = requestId;
-        String responseId = argStructure.getResponseId();
-        String responseSubId = responseId;
 
         /*
          * Java 版では引数の型は厳密に指定します．
@@ -533,38 +657,34 @@ public class BlancoRestXml2SourceFile {
 //                responseId = telegram.getTelegramSuperClass();
 //            }
 //        }
-        for (BlancoRestTelegram telegram : argListTelegrams) {
-//            System.out.println("### type = " + telegram.getTelegramType());
-            if ("Input".equals(telegram.getTelegramType())) {
-                requestId = telegram.getPackage() + "." + requestId;
-            }
-            if ("Output".equals(telegram.getTelegramType())) {
-                responseId = telegram.getPackage() + "." + responseId;
-            }
-        }
 
+        BlancoRestTelegram input = argListTelegrams[TELEGRAM_INPUT];
+        BlancoRestTelegram output = argListTelegrams[TELEGRAM_OUTPUT];
+        //System.out.println("### type = " + input.getTelegramType());
+//        System.out.println("(createAbstractMethod)### method = " + output.getTelegramMethod());
+
+        String requestSubId = requestId;
+        requestId = input.getPackage() + "." + requestId;
+        String responseSubId = responseId;
+        responseId = output.getPackage() + "." + responseId;
         cgProcessorMethod.getParameterList().add(
                 fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle.getXml2sourceFileProsessorArgLangdoc()));
-
         cgProcessorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileProsessorReturnLangdoc()));
 
     }
 
-    private void createExecuteMethod(BlancoRestTelegramProcess argStructure, List<BlancoRestTelegram>  argListTelegrams) {
+    private void createExecuteMethod(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
         final BlancoCgMethod cgExecutorMethod = fCgFactory.createMethod(
                 BlancoRestConstants.BASE_EXECUTOR_METHOD, fBundle.getXml2sourceFileExecutorDescription());
         fCgClass.getMethodList().add(cgExecutorMethod);
         cgExecutorMethod.setAccess("protected");
+        final List<String> ListLine = cgExecutorMethod.getLineList();
 
         /*
          * 型チェックを通す為にSuperClassがある場合はそれを使います
          */
-        String requestId = argStructure.getRequestId();
-        String requestSubId = requestId;
-        String responseId = argStructure.getResponseId();
-        String responseSubId = responseId;
 
         /*
          * Java 版では引数の型は厳密に指定します．
@@ -578,37 +698,35 @@ public class BlancoRestXml2SourceFile {
 //                responseId = telegram.getTelegramSuperClass();
 //            }
 //        }
-        for (BlancoRestTelegram telegram : argListTelegrams) {
-//            System.out.println("### type = " + telegram.getTelegramType());
-            if ("Input".equals(telegram.getTelegramType())) {
-                requestId = telegram.getPackage() + "." + requestId;
-            }
-            if ("Output".equals(telegram.getTelegramType())) {
-                responseId = telegram.getPackage() + "." + responseId;
-            }
-        }
 
+        BlancoRestTelegram input = argListTelegrams[TELEGRAM_INPUT];
+        BlancoRestTelegram output = argListTelegrams[TELEGRAM_OUTPUT];
+        //System.out.println("### type = " + input.getTelegramType());
+//        System.out.println("(createExecuteMethod)### method = " + output.getTelegramMethod());
+
+        String requestSubId = requestId;
+        requestId = input.getPackage() + "." + requestId;
+        String responseSubId = responseId;
+        responseId = output.getPackage() + "." + responseId;
         cgExecutorMethod.getParameterList().add(
                 fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle
                                 .getXml2sourceFileExecutorArgLangdoc()));
-
         cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileExecutorReturnLangdoc()));
 
         // メソッドの実装
-        final List<String> listLine = cgExecutorMethod.getLineList();
-
-        listLine.add(
+        ListLine.add(
                 responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
                         + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "this." + BlancoRestConstants.API_PROCESS_METHOD
                         + "( " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestSubId + " )"
                         + BlancoCgLineUtil.getTerminator(fTargetLang));
 
-        listLine.add("\n");
-        listLine.add("return "
+        ListLine.add("\n");
+        ListLine.add("return "
                 + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
+
     }
 
     private void overrideAuthenticationRequired(BlancoRestTelegramProcess argStructure) {
@@ -634,12 +752,11 @@ public class BlancoRestXml2SourceFile {
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
-    private void createRequestIdMethod(BlancoRestTelegramProcess argStructure) {
-        String methodName = BlancoRestConstants.API_REQUESTID_METHOD;
-
+    private void createRequestIdMethod(String methodName, String requestIdName, String packageName) {
         final BlancoCgMethod cgRequestIdMethod = fCgFactory.createMethod(
                 methodName, fBundle.getXml2sourceFileRequestidDesctiption());
         fCgClass.getMethodList().add(cgRequestIdMethod);
+
         cgRequestIdMethod.setAccess("protected");
 
         List<String> annotators = new ArrayList<>();
@@ -649,16 +766,20 @@ public class BlancoRestXml2SourceFile {
         cgRequestIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
                 fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
-        // メソッドの実装
+        /*
+         * メソッドの実装
+         * 定義されていないときはnullを返す
+         */
         final List<String> listLine = cgRequestIdMethod.getLineList();
-
-
-        listLine.add("return " + "\"" + argStructure.getPackage() + "." + argStructure.getRequestId() + "\""
-                + BlancoCgLineUtil.getTerminator(fTargetLang));
+        if(requestIdName == null) {
+            listLine.add("return null" + BlancoCgLineUtil.getTerminator(fTargetLang));
+        } else {
+            listLine.add("return " + "\"" + packageName + "." + requestIdName + "\""
+                    + BlancoCgLineUtil.getTerminator(fTargetLang));
+        }
     }
 
-    private void createResponseIdMethod(BlancoRestTelegramProcess argStructure) {
-        String methodName = BlancoRestConstants.API_RESPONSE_METHOD;
+    private void createResponseIdMethod(String methodName, String responseIdName, String packageName) {
 
         final BlancoCgMethod cgResponseIdMethod = fCgFactory.createMethod(
                 methodName, fBundle.getXml2sourceFileRequestidDesctiption());
@@ -672,12 +793,17 @@ public class BlancoRestXml2SourceFile {
         cgResponseIdMethod.setReturn(fCgFactory.createReturn("java.lang.String",
                 fBundle.getXml2sourceFileRequestidReturnLangdoc()));
 
-        // メソッドの実装
+        /*
+         * メソッドの実装
+         * 定義されていないときはnullを返す
+         */
         final List<String> listLine = cgResponseIdMethod.getLineList();
-
-
-        listLine.add("return " + "\"" + argStructure.getPackage() + "." + argStructure.getResponseId() + "\""
-                + BlancoCgLineUtil.getTerminator(fTargetLang));
+        if(responseIdName == null) {
+            listLine.add("return null" + BlancoCgLineUtil.getTerminator(fTargetLang));
+        } else {
+            listLine.add("return " + "\"" + packageName + "." + responseIdName + "\""
+                    + BlancoCgLineUtil.getTerminator(fTargetLang));
+        }
     }
 
     /**
@@ -735,7 +861,7 @@ public class BlancoRestXml2SourceFile {
         expandValueObject(argStructure);
 
         // required 文を出力しない ... 将来的には xls で指定するように？
-        fCgSourceFile.setIsImport(false);
+        //fCgSourceFile.setIsImport(false);
 
         BlancoCgTransformerFactory.getSourceTransformer(fTargetLang).transform(
                 fCgSourceFile, fileBlancoMain);

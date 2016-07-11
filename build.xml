@@ -147,7 +147,7 @@
 		<!-- TODO: ここに自身のantタスクを追加してください。 -->
 		<copy file="src/blanco/rest/BlancoRestMeta2Xml.xml" todir="bin/blanco/rest" />
 		<blancovalueobject metadir="meta/objects" tmpdir="tmp2" targetdir="blanco.java" encoding="${encoding}" />
-		<blancorest metadir="meta/api" tmpdir="tmp2" targetdir="blanco.java" encoding="${encoding}" sheetType="php" />
+		<blancorest metadir="meta/test" tmpdir="tmp2" targetdir="blanco.java" encoding="${encoding}" sheetType="php" />
 	</target>
 
 	<target name="build" depends="meta,compile,jar,pack">

@@ -1,10 +1,7 @@
 package blanco.rest.api;
 
-import blanco.sample.restphp.AbstractRestSample;
-import blanco.sample.restphp.RestSampleRequest;
-import blanco.sample.restphp.RestSampleResponse;
-import blanco.sample.valueobject.ApiTelegram;
-import blanco.sample.valueobject.ObjectSample;
+import blanco.sample.restphp.*;
+import blanco.sample.valueobject.*;
 
 import java.util.ArrayList;
 
@@ -13,9 +10,18 @@ import java.util.ArrayList;
  *
  * Created by tueda on 15/10/08.
  */
-public class TelegramSample extends AbstractRestSample {
+public class TelegramSample extends AbstractRestSampleWithMethod {
 
-    protected RestSampleResponse process(RestSampleRequest argRequest) {
+    protected RestSampleWithMethodGetResponse process(RestSampleWithMethodGetRequest argRequest) {
+        return null;
+    }
+    protected RestSampleWithMethodPostResponse process(RestSampleWithMethodPostRequest argRequest) {
+        return null;
+    }
+    protected RestSampleWithMethodPutResponse process(RestSampleWithMethodPutRequest argRequest) {
+        return null;
+    }
+    protected RestSampleWithMethodDeleteResponse process(RestSampleWithMethodDeleteRequest argRequest) {
         return null;
     }
 }
