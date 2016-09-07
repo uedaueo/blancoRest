@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project name="BlancoRest" default="build" basedir=".">
-	<property name="version" value="0.0.1" />
+	<property name="version" value="0.0.2" />
 
 	<property name="project" value="blancoRest" />
 	<property name="project.lower" value="blancorest" />
@@ -97,10 +97,14 @@
 			<zipfileset dir="bin" includes="**/*" excludes="blanco/sample/**" />
 			<!-- Javaソースコード(通常)の取り込み (※sampleは除外) -->
 			<zipfileset dir="src" includes="**/*" prefix="src" excludes="blanco/sample/**" />
+			<zipfileset dir="src.main" includes="**/*.java" prefix="src" excludes="blanco/sample/**" />
+			<zipfileset dir="servlet" includes="**/*.java" prefix="src" excludes="blanco/sample/**" />
 			<!-- Javaソースコード(自動生成)の取り込み (※sampleは除外) -->
 			<zipfileset dir="blanco/main" includes="**/*.java" prefix="src" excludes="blanco/sample/**" />
+			<zipfileset dir="blanco.java/main" includes="**/*.java" prefix="src" excludes="blanco/sample/**" />
 			<!-- プロパティファイルの取り込み -->
 			<zipfileset dir="blanco/main" includes="**/*.properties" excludes="blanco/sample/**" />
+
 		</jar>
 	</target>
 
