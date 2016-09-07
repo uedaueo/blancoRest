@@ -16,6 +16,8 @@ import blanco.cg.util.BlancoCgLineUtil;
 import blanco.cg.valueobject.*;
 import blanco.commons.util.BlancoNameAdjuster;
 import blanco.commons.util.BlancoStringUtil;
+import blanco.rest.common.LogLevel;
+import blanco.rest.common.Util;
 import blanco.rest.resourcebundle.BlancoRestResourceBundle;
 import blanco.rest.valueobject.BlancoRestTelegram;
 import blanco.rest.valueobject.BlancoRestTelegramField;
@@ -835,11 +837,23 @@ public class BlancoRestXml2SourceFile {
         String telegramBase = argStructure.getTelegramSuperClass();
         if (telegramBase != null) {
 
+            /* search the superclass from valueobject parsed list  */
             BlancoValueObjectClassStructure objectClassStructure =
                     BlancoRestObjectsInfo.objects.get(telegramBase);
 
             String packageName = null;
-            if (objectClassStructure != null && (packageName = objectClassStructure.getPackage()) != null) {
+
+            if (objectClassStructure == null) {
+                /* search from blancoRest default valueobjects */
+                try {
+                    String tmpBase = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + telegramBase;
+                    Class.forName(tmpBase);
+                    telegramBase = tmpBase;
+                } catch (ClassNotFoundException e) {
+                    Util.infoPrintln(LogLevel.LOG_INFO, "/* tueda */ " + telegramBase + " is NOT FOUND.");
+                }
+
+            } else if ((packageName = objectClassStructure.getPackage()) != null) {
                 telegramBase = packageName + "." + telegramBase;
             }
 
