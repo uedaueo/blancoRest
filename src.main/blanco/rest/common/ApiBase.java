@@ -2,12 +2,17 @@ package blanco.rest.common;
 
 import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.resourcebundle.BlancoRestResourceBundle;
-import blanco.sample.valueobject.ApiTelegram;
+import blanco.rest.valueobject.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
+
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
+//import haino.sample.HainoApiSampleGetResponse;
 
 /**
  * Created by tueda on 15/10/05.
@@ -27,13 +32,101 @@ abstract public class ApiBase {
     abstract protected String getPutResponseId();
     abstract protected String getDeleteRequestId();
     abstract protected String getDeleteResponseId();
+    abstract protected ApiGetTelegram execute(ApiGetTelegram apiGetTelegram);
+    abstract protected ApiPostTelegram execute(ApiPostTelegram apiPostTelegram);
+    abstract protected ApiPutTelegram execute(ApiPutTelegram apiPutTelegram);
+    abstract protected ApiDeleteTelegram execute(ApiDeleteTelegram apiDeleteTelegram);
 
-    final public ApiTelegram send(ApiTelegram request) throws BlancoRestException {
+    final private ApiTelegram sendTo(ApiTelegram request, String httpMethod) throws BlancoRestException {
         ApiTelegram response = null;
+        CommonRequest commonRequest = new CommonRequest();
+        commonRequest.settoken("dummy");
+        commonRequest.setlang("ja");
+        commonRequest.setrequest(request);
 
+        CommonResponse commonResponse = null;
+
+        ApiTelegram output = getOutputInstance(httpMethod);
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String json = mapper.writeValueAsString(commonRequest);
+            System.out.println("JSON: " + json);
+            String url = ClientConfig.apiUrl + this.getClass().getSimpleName();
+            BlancoHttpConnection conn = new BlancoHttpConnection(url);
+            System.out.println("URL: " + url);
+            String responseJson = conn.connect(json);
+
+            System.out.println("Response: " + responseJson);
+
+            ResponseDeserializer deserializer = new ResponseDeserializer();
+            deserializer.setResponseClass(output);
+
+            SimpleModule module =
+                    new SimpleModule("PolymorphicAnimalDeserializerModule");
+            module.addDeserializer(CommonResponse.class, deserializer);
+
+            /*
+             * 念のため作り直し
+             */
+            mapper = new ObjectMapper();
+            mapper.registerModule(module);
+
+            commonResponse = (CommonResponse)mapper.readValue(responseJson, CommonResponse.class);
+
+            if(commonResponse != null){
+                if ("SUCCESS".equalsIgnoreCase(commonResponse.getstatus())){
+                    response = commonResponse.getresponse();
+                }else {
+                    Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#sendTo response status: " + commonResponse.getstatus());
+                }
+            }else{
+                Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#sendTo readValue null");
+            }
+
+
+
+        } catch (JsonProcessingException e) {
+            throw new BlancoRestException(e);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        /**
+        HttpClient httpclient = new HttpClient();
+        GetMethod httpget = new GetMethod("https://www.verisign.com/");
+        try {
+            httpclient.executeMethod(httpget);
+            System.out.println(httpget.getStatusLine());
+        } finally {
+            httpget.releaseConnection();
+        }
+
+        response = getDummyResponse();
+        **/
+        return response;
+    }
+
+    final public ApiPostTelegram send(ApiPostTelegram request) throws BlancoRestException {
         if (request == null) {
             throw new BlancoRestException(
-                fBundle.getBlancorestErrorMsg01()
+                    fBundle.getBlancorestErrorMsg01()
+            );
+        }
+
+        if (!this.getPostRequestId().equalsIgnoreCase(request.getClass().getCanonicalName())) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg02(
+                            this.getPostRequestId(), request.getClass().getCanonicalName())
+            );
+        }
+
+        return (ApiPostTelegram) sendTo(request, "POST");
+    }
+
+    final public ApiGetTelegram send(ApiGetTelegram request) throws BlancoRestException {
+        if (request == null) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg01()
             );
         }
 
@@ -43,24 +136,83 @@ abstract public class ApiBase {
                             this.getGetRequestId(), request.getClass().getCanonicalName())
             );
         }
-
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            String json = mapper.writeValueAsString(request);
-            System.out.println("JSON: " + json);
-        } catch (JsonProcessingException e) {
-            throw new BlancoRestException(e);
-        }
-
-        response = getDummyResponse();
-
-        return response;
+        return (ApiGetTelegram) sendTo(request, "GET");
     }
 
-    final public ApiTelegram getDummyResponse() {
+    final public ApiPutTelegram send(ApiPutTelegram request) throws BlancoRestException {
+        if (request == null) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg01()
+            );
+        }
+
+        if (!this.getPutRequestId().equalsIgnoreCase(request.getClass().getCanonicalName())) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg02(
+                            this.getPutRequestId(), request.getClass().getCanonicalName())
+            );
+        }
+        return (ApiPutTelegram) sendTo(request, "PUT");
+    }
+
+    final public ApiDeleteTelegram send(ApiDeleteTelegram request) throws BlancoRestException {
+        if (request == null) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg01()
+            );
+        }
+
+        if (!this.getDeleteRequestId().equalsIgnoreCase(request.getClass().getCanonicalName())) {
+            throw new BlancoRestException(
+                    fBundle.getBlancorestErrorMsg02(
+                            this.getDeleteRequestId(), request.getClass().getCanonicalName())
+            );
+        }
+        return (ApiDeleteTelegram) sendTo(request, "DELETE");
+    }
+
+
+    public ApiGetTelegram action(ApiGetTelegram apitelegram){
+        Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiGetTelegram");
+        return this.execute(apitelegram);
+
+    }
+
+    public ApiPutTelegram action(ApiPutTelegram apitelegram){
+        Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiPutTelegram");
+        return this.execute(apitelegram);
+
+    }
+
+    public ApiPostTelegram action(ApiPostTelegram apitelegram){
+        Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiPostTelegram");
+        return this.execute(apitelegram);
+
+    }
+
+    public ApiDeleteTelegram action(ApiDeleteTelegram apitelegram){
+        Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiDeleteTelegram");
+        return this.execute(apitelegram);
+
+    }
+
+    final public ApiTelegram getOutputInstance(String httpMethod) throws BlancoRestException {
         ApiTelegram response = null;
 
-        String responseId = this.getGetResponseId();
+
+        String responseId = null;
+        if ("GET".equalsIgnoreCase(httpMethod)){
+            responseId = this.getGetResponseId();
+        }else if("POST".equalsIgnoreCase(httpMethod)){
+            responseId = this.getPostResponseId();
+        } else if("PUT".equalsIgnoreCase(httpMethod)){
+            responseId = this.getPutResponseId();
+        }else if("DELETE".equalsIgnoreCase(httpMethod)){
+            responseId = this.getDeleteResponseId();
+        }else {
+            Util.infoPrintln(LogLevel.LOG_CRIT,"No method specified");
+            throw  new BlancoRestException("No method specified");
+        }
 
         Class<?> clazz;
         try {
@@ -70,7 +222,7 @@ abstract public class ApiBase {
                     clazz.getConstructor(new Class<?>[0]);
 
             // インスタンス生成
-            response = (ApiTelegram)constructor.newInstance();
+            response = (ApiTelegram) constructor.newInstance();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -85,4 +237,5 @@ abstract public class ApiBase {
 
         return response;
     }
+
 }
