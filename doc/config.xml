@@ -1,21 +1,6 @@
-==============
-はじめに
-==============
-
-このファイルは、
-blancoRest
-のREADMEファイルです。
-
-==============
-設定ファイル
-==============
-
-/etc/blancorest/config.xml を配置します。
-
-::
-   <?xml version="1.0" encoding="UTF-8"?>
-   <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-   <properties>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
     <comment>Runtime Properties for blancoRest</comment>
     <entry key="ApiUrl">http://10.211.55.4/dapanda/</entry>
     <entry key="AuthId"></entry>
@@ -24,4 +9,5 @@ blancoRest
     <entry key="SocketTimeout">3</entry>
     <entry key="ConnectionTimeout">3</entry>
     <entry key="Loglevel">LOG_DEBUG</entry>
-   </properties>
+    <entry key="DefaultPackage">blanco.rest</entry>
+</properties>

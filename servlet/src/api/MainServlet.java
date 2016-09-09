@@ -1,8 +1,6 @@
 package api;
-import blanco.rest.common.ApiBase;
-import blanco.rest.common.LogLevel;
-import blanco.rest.common.RequestDeserializer;
-import blanco.rest.common.Util;
+import blanco.rest.BlancoRestConstants;
+import blanco.rest.common.*;
 import blanco.rest.valueobject.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -11,9 +9,20 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 
 public class MainServlet extends HttpServlet{
+
+	@Override
+	public void init(){
+		System.out.println("MainServlet#init()");
+		new Config();
+	}
+
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
-		String api = "haino.sample." + request.getParameter("api");
+		String apiPackage = Config.properties.getProperty(Config.defaultPackageKey);
+		if(apiPackage == null){
+			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
+		}
+		String api = apiPackage + "." + request.getParameter("api");
 		Util.infoPrintln(LogLevel.LOG_DEBUG,api);
 		System.out.println("api = " + api);
 		try {
@@ -63,7 +72,11 @@ public class MainServlet extends HttpServlet{
 	}
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException {
-		String api = "haino.sample." + request.getParameter("api");
+		String apiPackage = Config.properties.getProperty(Config.defaultPackageKey);
+		if(apiPackage == null){
+			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
+		}
+		String api = apiPackage + "." + request.getParameter("api");
 		Util.infoPrintln(LogLevel.LOG_DEBUG,"doPost " + api);
 		try {
 			//クラスの名前文字列からクラスのインスタンスを生成
@@ -143,10 +156,18 @@ public class MainServlet extends HttpServlet{
 	}
 
 	public void doPut(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
+		String apiPackage = Config.properties.getProperty(Config.defaultPackageKey);
+		if(apiPackage == null){
+			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
+		}
                	
 	}
 
 	public void doDelete(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
+		String apiPackage = Config.properties.getProperty(Config.defaultPackageKey);
+		if(apiPackage == null){
+			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
+		}
                 
 	}
 

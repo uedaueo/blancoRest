@@ -56,7 +56,7 @@ public class Util {
 		int minute = cal.get(Calendar.MINUTE);    //(6)現在の分を取得
 		int second = cal.get(Calendar.SECOND);    //(7)現在の秒を取得
 
-		String logThreshold = ServerConfig.logLevel;
+		String logThreshold = Config.properties.getProperty(Config.logLevelKey);
 		if (logThreshold == null)
 			logThreshold = "LOG_DEBUG";
 

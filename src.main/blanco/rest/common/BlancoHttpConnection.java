@@ -93,7 +93,7 @@ public class BlancoHttpConnection {
         HttpPost post = null;
         try {
             post = new HttpPost(strUrl);
-            post.setHeader("User-Agent", ClientConfig.userAgent);
+            post.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
 
         /* data の設定 */
             HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));

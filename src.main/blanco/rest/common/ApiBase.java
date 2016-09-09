@@ -21,9 +21,10 @@ abstract public class ApiBase {
 
     private BlancoRestResourceBundle fBundle = new BlancoRestResourceBundle();
 
+
     /*
-     * 自動生成された API クラスで override されます
-     */
+         * 自動生成された API クラスで override されます
+         */
     abstract protected String getGetRequestId();
     abstract protected String getGetResponseId();
     abstract protected String getPostRequestId();
@@ -36,6 +37,7 @@ abstract public class ApiBase {
     abstract protected ApiPostTelegram execute(ApiPostTelegram apiPostTelegram);
     abstract protected ApiPutTelegram execute(ApiPutTelegram apiPutTelegram);
     abstract protected ApiDeleteTelegram execute(ApiDeleteTelegram apiDeleteTelegram);
+
 
     final private ApiTelegram sendTo(ApiTelegram request, String httpMethod) throws BlancoRestException {
         ApiTelegram response = null;
@@ -52,7 +54,7 @@ abstract public class ApiBase {
         try {
             String json = mapper.writeValueAsString(commonRequest);
             System.out.println("JSON: " + json);
-            String url = ClientConfig.apiUrl + this.getClass().getSimpleName();
+            String url = Config.properties.getProperty(Config.apiUrlKey) + this.getClass().getSimpleName();
             BlancoHttpConnection conn = new BlancoHttpConnection(url);
             System.out.println("URL: " + url);
             String responseJson = conn.connect(json);
@@ -72,7 +74,9 @@ abstract public class ApiBase {
             mapper = new ObjectMapper();
             mapper.registerModule(module);
 
+            System.out.println("ApiBase#responseJson " + responseJson);
             commonResponse = (CommonResponse)mapper.readValue(responseJson, CommonResponse.class);
+            System.out.println("ApiBase#commonResponse" + commonResponse);
 
             if(commonResponse != null){
                 if ("SUCCESS".equalsIgnoreCase(commonResponse.getstatus())){
