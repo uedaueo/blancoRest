@@ -707,9 +707,12 @@ public class BlancoRestXml2SourceFile {
 //        System.out.println("(createExecuteMethod)### method = " + output.getTelegramMethod());
 
         String requestSubId = requestId;
-        requestId = input.getPackage() + "." + requestId;
+        String requestCastId = /*input.getPackage() + "." + */requestId;
+        /* ApiBaseのabstract methodで電文の親クラスを指定したので、ここでもそうする */
+        requestId = input.getTelegramSuperClass();
         String responseSubId = responseId;
-        responseId = output.getPackage() + "." + responseId;
+//        responseId = output.getPackage() + "." + responseId;
+        responseId = output.getTelegramSuperClass();
         cgExecutorMethod.getParameterList().add(
                 fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle
@@ -721,7 +724,7 @@ public class BlancoRestXml2SourceFile {
         ListLine.add(
                 responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
                         + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "this." + BlancoRestConstants.API_PROCESS_METHOD
-                        + "( " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestSubId + " )"
+                        + "( " +  "("+requestCastId+ ")" +  BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestSubId + " )"
                         + BlancoCgLineUtil.getTerminator(fTargetLang));
 
         ListLine.add("\n");
@@ -1207,6 +1210,24 @@ public class BlancoRestXml2SourceFile {
                 String packageName = structure.getPackage();
                 if (packageName != null) {
                     javaType = packageName + "." + phpType;
+                } else {
+                /* search from blancoRest default valueobjects */
+                    try {
+                        String tmpBase = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + phpType;
+                        Class.forName(tmpBase);
+                        javaType = tmpBase;
+                    } catch (ClassNotFoundException e) {
+                        Util.infoPrintln(LogLevel.LOG_INFO, "/* tueda */ " + phpType + " is NOT FOUND 2.");
+                    }
+                }
+            } else {
+                /* search from blancoRest default valueobjects */
+                try {
+                    String tmpBase = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + phpType;
+                    Class.forName(tmpBase);
+                    javaType = tmpBase;
+                } catch (ClassNotFoundException e) {
+                    Util.infoPrintln(LogLevel.LOG_INFO, "/* tueda */ " + phpType + " is NOT FOUND 3.");
                 }
             }
                     /* その他はそのまま記述する */

@@ -19,6 +19,10 @@ public class Config {
         read(BlancoRestConstants.CONFIG_FILE);
     }
 
+    public Config(String filename){
+        read(filename);
+    }
+
 
     /** API サーバのURL */
     public static final String apiUrlKey = "ApiUrl"; //"http://10.211.55.4/dapanda/";

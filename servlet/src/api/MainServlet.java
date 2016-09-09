@@ -133,7 +133,9 @@ public class MainServlet extends HttpServlet{
 			 */
 			ApiPostTelegram telegramResponse = apiClassInstance.action((ApiPostTelegram) readValue.getrequest());
 			// Java → JSON に変換
+
 			CommonResponse commonResponse =  new CommonResponse();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
 			commonResponse.setresponse(telegramResponse);
 			commonResponse.setstatus("SUCCESS");
 			commonResponse.settoken(readValue.gettoken());
