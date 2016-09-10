@@ -45,6 +45,8 @@ public class Config {
 
     public static final String defaultPackageKey = "DefaultPackage";
 
+    public static final String sessionManagerKey = "SessionManagerImplClass";
+
     //public static final String tokenKey = "Token"; //"dummy";
 
     //public static final String langKey = "Lang";//"ja";

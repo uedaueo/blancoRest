@@ -1,19 +1,29 @@
 package api;
 import blanco.rest.BlancoRestConstants;
+import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.common.*;
 import blanco.rest.valueobject.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.*;
+import java.security.SecureRandom;
+import java.util.Calendar;
+import java.util.Random;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
 public class MainServlet extends HttpServlet{
 
+	private Random random;
+
 	@Override
 	public void init(){
 		System.out.println("MainServlet#init()");
 		new Config();
+		random = new SecureRandom();
+		random.setSeed(Thread.currentThread().getId());
+
+
 	}
 
 	
@@ -29,6 +39,9 @@ public class MainServlet extends HttpServlet{
 			//クラスの名前文字列からクラスのインスタンスを生成
 			Class apiClass = Class.forName(api);
 			ApiBase apiClassInstance = (ApiBase) apiClass.newInstance();
+
+			createSessionManager(apiClassInstance);
+
 			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
 			StringBuilder sb = new StringBuilder();
 			//ボディ部分の情報を取得
@@ -50,6 +63,7 @@ public class MainServlet extends HttpServlet{
 			String strRequestClass = api + "GetRequest";
 			Class requestClass = Class.forName(strRequestClass);
 			ApiGetTelegram telegramRequest = (ApiGetTelegram) requestClass.newInstance();
+
 
 
 			/*
@@ -83,6 +97,9 @@ public class MainServlet extends HttpServlet{
 			Class apiClass = Class.forName(api);
 			ApiBase apiClassInstance = (ApiBase) apiClass.newInstance();
 			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
+
+			createSessionManager(apiClassInstance);
+
 			StringBuilder sb = new StringBuilder();
 			//ボディ部分の情報を取得
 			BufferedReader reader = request.getReader();
@@ -125,8 +142,11 @@ public class MainServlet extends HttpServlet{
 			//ApiPostTelegram telegramRequest = (ApiPostTelegram) mapper.readValue(jsonString,requestClass);
 			//Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + telegramRequest);
 
-
-
+			SessionManager sessionManager = apiClassInstance.getSessionManager();
+			if(sessionManager.validate(readValue.gettoken()) == false){
+				Util.infoPrintln(LogLevel.LOG_EMERG,"sessionManager.validate = false");
+				throw new BlancoRestException("sessionManager.validate = false");
+			}
 
 			/*
 			API の呼び出し
@@ -138,7 +158,9 @@ public class MainServlet extends HttpServlet{
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
 			commonResponse.setresponse(telegramResponse);
 			commonResponse.setstatus("SUCCESS");
-			commonResponse.settoken(readValue.gettoken());
+			long currentTimeMillis = System.currentTimeMillis();
+			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.settoken(sessionManager.renew(readValue.gettoken(), seed));
 			commonResponse.setlang(readValue.getlang());
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
@@ -151,6 +173,8 @@ public class MainServlet extends HttpServlet{
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (BlancoRestException e) {
 			e.printStackTrace();
 		}
 
@@ -171,6 +195,29 @@ public class MainServlet extends HttpServlet{
 			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
 		}
                 
+	}
+
+	private void createSessionManager(ApiBase apiClassInstance) {
+		// SessionManagerImpl の 設定
+		String strSessionManagerImpl = Config.properties.getProperty(Config.sessionManagerKey);
+		SessionManager sessionManagerImpl = null;
+		try {
+			if (strSessionManagerImpl != null) {
+				Class sessionManagerImplClass = Class.forName(strSessionManagerImpl);
+				sessionManagerImpl = (SessionManager) sessionManagerImplClass.newInstance();
+
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		}
+		if (sessionManagerImpl == null) {
+			sessionManagerImpl = new SessionManagerImpl();
+		}
+		apiClassInstance.setSessionManager(sessionManagerImpl);
 	}
 
 }

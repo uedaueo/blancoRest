@@ -38,6 +38,17 @@ abstract public class ApiBase {
     abstract protected ApiPutTelegram execute(ApiPutTelegram apiPutTelegram);
     abstract protected ApiDeleteTelegram execute(ApiDeleteTelegram apiDeleteTelegram);
 
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public void setSessionManager(SessionManager sessionManager) {
+        this.sessionManager = sessionManager;
+    }
+
+    private SessionManager sessionManager = new SessionManagerImpl();
+
+
 
     final private ApiTelegram sendTo(ApiTelegram request, String httpMethod) throws BlancoRestException {
         ApiTelegram response = null;
