@@ -33,10 +33,10 @@ abstract public class ApiBase {
     abstract protected String getPutResponseId();
     abstract protected String getDeleteRequestId();
     abstract protected String getDeleteResponseId();
-    abstract protected ApiGetTelegram execute(ApiGetTelegram apiGetTelegram);
-    abstract protected ApiPostTelegram execute(ApiPostTelegram apiPostTelegram);
-    abstract protected ApiPutTelegram execute(ApiPutTelegram apiPutTelegram);
-    abstract protected ApiDeleteTelegram execute(ApiDeleteTelegram apiDeleteTelegram);
+    abstract protected ApiGetTelegram execute(ApiGetTelegram apiGetTelegram) throws BlancoRestException;
+    abstract protected ApiPostTelegram execute(ApiPostTelegram apiPostTelegram) throws BlancoRestException;
+    abstract protected ApiPutTelegram execute(ApiPutTelegram apiPutTelegram) throws BlancoRestException;
+    abstract protected ApiDeleteTelegram execute(ApiDeleteTelegram apiDeleteTelegram) throws BlancoRestException;
 
     public SessionManager getSessionManager() {
         return sessionManager;
@@ -187,25 +187,25 @@ abstract public class ApiBase {
     }
 
 
-    public ApiGetTelegram action(ApiGetTelegram apitelegram){
+    public ApiGetTelegram action(ApiGetTelegram apitelegram) throws BlancoRestException{
         Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiGetTelegram");
         return this.execute(apitelegram);
 
     }
 
-    public ApiPutTelegram action(ApiPutTelegram apitelegram){
+    public ApiPutTelegram action(ApiPutTelegram apitelegram) throws BlancoRestException{
         Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiPutTelegram");
         return this.execute(apitelegram);
 
     }
 
-    public ApiPostTelegram action(ApiPostTelegram apitelegram){
+    public ApiPostTelegram action(ApiPostTelegram apitelegram) throws BlancoRestException{
         Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiPostTelegram");
         return this.execute(apitelegram);
 
     }
 
-    public ApiDeleteTelegram action(ApiDeleteTelegram apitelegram){
+    public ApiDeleteTelegram action(ApiDeleteTelegram apitelegram) throws BlancoRestException{
         Util.infoPrintln(LogLevel.LOG_DEBUG,"ApiBase#action ApiDeleteTelegram");
         return this.execute(apitelegram);
 

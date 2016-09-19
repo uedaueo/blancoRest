@@ -80,6 +80,8 @@ public class MainServlet extends HttpServlet{
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
+		} catch (BlancoRestException e) {
+			e.printStackTrace();
 		}
 
 

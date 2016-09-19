@@ -605,6 +605,8 @@ public class BlancoRestXml2SourceFile {
                 createAbstractMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
                 // base class からの abstract method の実装
                 createExecuteMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
+            } else {
+                createExecuteMethodNotImplemented(requestIdName[i], responseIdName[i], argListTelegrams[i]);
             }
         }
         /* getter, setterがまとまるように、process, executeとは別にfor文を回す
@@ -734,6 +736,55 @@ public class BlancoRestXml2SourceFile {
 
     }
 
+    private void createExecuteMethodNotImplemented(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
+        final BlancoCgMethod cgExecutorMethod = fCgFactory.createMethod(
+                BlancoRestConstants.BASE_EXECUTOR_METHOD, fBundle.getXml2sourceFileExecutorDescription());
+        fCgClass.getMethodList().add(cgExecutorMethod);
+        cgExecutorMethod.setAccess("protected");
+        final List<String> ListLine = cgExecutorMethod.getLineList();
+
+//        BlancoRestTelegram input = argListTelegrams[TELEGRAM_INPUT];
+//        BlancoRestTelegram output = argListTelegrams[TELEGRAM_OUTPUT];
+
+        /* Excel sheet に電文定義がない場合にここにくるので、その場合は電文処理シートの定義を使う */
+        cgExecutorMethod.getParameterList().add(
+                fCgFactory.createParameter("argRequest", requestId,
+                        fBundle
+                                .getXml2sourceFileExecutorArgLangdoc()));
+        cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
+                fBundle.getXml2sourceFileExecutorReturnLangdoc()));
+
+        BlancoCgType blancoCgType = new BlancoCgType();
+        blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
+        blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
+
+        BlancoCgException blancoCgException = new BlancoCgException();
+        blancoCgException.setType(blancoCgType);
+        blancoCgException.setDescription(fBundle.getXml2sourceFileDefaultExceptionLangdoc());
+
+        ArrayList<BlancoCgException> arrayBlancoCgException = new ArrayList<>();
+        arrayBlancoCgException.add(blancoCgException);
+
+        cgExecutorMethod.setThrowList(arrayBlancoCgException);
+
+        // メソッドの実装
+        //throw new BlancoRestException("GetMethod is not implemented in this api");
+        ListLine.add(
+                "throw new " + BlancoRestConstants.DEFAULT_EXCEPTION + "( " + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang) +
+                        fBundle.getBlancorestErrorMsg05(requestId) + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang)  +")" + BlancoCgLineUtil.getTerminator(fTargetLang));
+
+//        ListLine.add(
+//                responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
+//                        + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "this." + BlancoRestConstants.API_PROCESS_METHOD
+//                        + "( " +  "("+requestCastId+ ")" +  BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "arg" + requestSubId + " )"
+//                        + BlancoCgLineUtil.getTerminator(fTargetLang));
+
+//        ListLine.add("\n");
+//        ListLine.add("return "
+//                + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId
+//                + BlancoCgLineUtil.getTerminator(fTargetLang));
+
+    }
     private void overrideAuthenticationRequired(BlancoRestTelegramProcess argStructure) {
         String methodName = BlancoRestConstants.API_AUTHENTICATION_REQUIRED;
 
