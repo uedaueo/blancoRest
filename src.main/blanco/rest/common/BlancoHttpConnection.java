@@ -4,8 +4,7 @@ import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.resourcebundle.BlancoRestResourceBundle;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -82,7 +81,58 @@ public class BlancoHttpConnection {
      * @return Response body. JSON 文字列を期待しています．
      * @throws BlancoRestException
      */
-    public String connect(String strJson) throws BlancoRestException {
+    public String connectGet(String strJson) throws BlancoRestException {
+
+        String ret = null;
+
+        if (this.strUrl == null) {
+            return ret;
+        }
+
+        HttpGet get = null;
+        try {
+            get = new HttpGet(strUrl);
+            get.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+
+        /* data の設定 */
+//            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
+//            post.setEntity(requestEntity);
+
+            client = HttpClients.createDefault();
+            response = client.execute(get);
+
+            if (response == null) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
+            }
+
+            if (response.getStatusLine().getStatusCode() > 300) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
+                        "" + response.getStatusLine().getStatusCode()));
+            }
+
+            HttpEntity responseEntity = response.getEntity();
+            ret = EntityUtils.toString(responseEntity);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close();
+        }
+        return ret;
+    }
+
+    /**
+     * APIへ接続
+     *
+     * @param strJson APIへの送信電文
+     * @return Response body. JSON 文字列を期待しています．
+     * @throws BlancoRestException
+     */
+    public String connectPost(String strJson) throws BlancoRestException {
 
         String ret = null;
 
@@ -122,6 +172,128 @@ public class BlancoHttpConnection {
             e.printStackTrace();
         } finally {
             close();
+        }
+        return ret;
+    }
+    /**
+     * APIへ接続
+     *
+     * @param strJson APIへの送信電文
+     * @return Response body. JSON 文字列を期待しています．
+     * @throws BlancoRestException
+     */
+    public String connectPut(String strJson) throws BlancoRestException {
+
+        String ret = null;
+
+        if (this.strUrl == null) {
+            return ret;
+        }
+
+        HttpPut put = null;
+        try {
+            put = new HttpPut(strUrl);
+            put.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+
+        /* data の設定 */
+            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
+            put.setEntity(requestEntity);
+
+            client = HttpClients.createDefault();
+            response = client.execute(put);
+
+            if (response == null) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
+            }
+
+            if (response.getStatusLine().getStatusCode() > 300) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
+                        "" + response.getStatusLine().getStatusCode()));
+            }
+
+            HttpEntity responseEntity = response.getEntity();
+            ret = EntityUtils.toString(responseEntity);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close();
+        }
+        return ret;
+    }
+    /**
+     * APIへ接続
+     *
+     * @param strJson APIへの送信電文
+     * @return Response body. JSON 文字列を期待しています．
+     * @throws BlancoRestException
+     */
+    public String connectDelete(String strJson) throws BlancoRestException {
+
+        String ret = null;
+
+        if (this.strUrl == null) {
+            return ret;
+        }
+
+        HttpDelete delete = null;
+        try {
+            delete = new HttpDelete(strUrl);
+            delete.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+
+            client = HttpClients.createDefault();
+            response = client.execute(delete);
+
+            if (response == null) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
+            }
+
+            if (response.getStatusLine().getStatusCode() > 300) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
+                        "" + response.getStatusLine().getStatusCode()));
+            }
+
+            HttpEntity responseEntity = response.getEntity();
+            ret = EntityUtils.toString(responseEntity);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close();
+        }
+        return ret;
+    }
+
+    /**
+     * APIへ接続
+     *
+     * @param strJson APIへの送信電文
+     * @return Response body. JSON 文字列を期待しています．
+     * @throws BlancoRestException
+     */
+    public String connect(String strJson, String httpMethod) throws BlancoRestException {
+
+        String ret = null;
+
+        if ("GET".equalsIgnoreCase(httpMethod)){
+            ret = connectGet(strJson);
+        }else if("POST".equalsIgnoreCase(httpMethod)){
+            ret = connectPost(strJson);
+        } else if("PUT".equalsIgnoreCase(httpMethod)){
+            ret = connectPut(strJson);
+        }else if("DELETE".equalsIgnoreCase(httpMethod)){
+            ret = connectDelete(strJson);
+        }else {
+            Util.infoPrintln(LogLevel.LOG_CRIT,"No method specified");
+            throw  new BlancoRestException("No method specified");
         }
         return ret;
     }

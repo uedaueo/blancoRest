@@ -68,7 +68,7 @@ abstract public class ApiBase {
             String url = Config.properties.getProperty(Config.apiUrlKey) + this.getClass().getSimpleName();
             BlancoHttpConnection conn = new BlancoHttpConnection(url);
             System.out.println("URL: " + url);
-            String responseJson = conn.connect(json);
+            String responseJson = conn.connect(json, httpMethod);
 
             System.out.println("Response: " + responseJson);
 

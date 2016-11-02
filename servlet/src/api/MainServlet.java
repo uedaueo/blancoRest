@@ -33,16 +33,15 @@ public class MainServlet extends HttpServlet{
 			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
 		}
 		String api = apiPackage + "." + request.getParameter("api");
-		Util.infoPrintln(LogLevel.LOG_DEBUG,api);
-		System.out.println("api = " + api);
+		Util.infoPrintln(LogLevel.LOG_DEBUG, "doGet " + api);
 		try {
 			//クラスの名前文字列からクラスのインスタンスを生成
 			Class apiClass = Class.forName(api);
 			ApiBase apiClassInstance = (ApiBase) apiClass.newInstance();
+			Util.infoPrintln(LogLevel.LOG_DEBUG, apiClassInstance.toString());
 
 			createSessionManager(apiClassInstance);
 
-			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
 			StringBuilder sb = new StringBuilder();
 			//ボディ部分の情報を取得
 			BufferedReader reader = request.getReader();
@@ -50,28 +49,64 @@ public class MainServlet extends HttpServlet{
 				String line;
 				while ((line = reader.readLine()) != null) {//1行ずつ読んで、空行がくるまで
 					sb.append(line).append('\n');//空行があった部分に空行を入れる
-					Util.infoPrintln(LogLevel.LOG_DEBUG,"sb");
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "sb");
 				}
 			} finally {
 				reader.close();
 			}
 			String jsonString = sb.toString();//sbをString型に変換
-			Util.infoPrintln(LogLevel.LOG_DEBUG,"jsonString = " + jsonString);
+			Util.infoPrintln(LogLevel.LOG_DEBUG, "jsonString = " + jsonString);
 
 			/* HTTP body の JSON を request 電文に詰め替える
 			 */
 			String strRequestClass = api + "GetRequest";
-			Class requestClass = Class.forName(strRequestClass);
-			ApiGetTelegram telegramRequest = (ApiGetTelegram) requestClass.newInstance();
+			Class<?> requestClass = Class.forName(strRequestClass);
+			ApiTelegram requestClassInstance = (ApiTelegram) requestClass.newInstance();
+
+			String strResponseClass = api + "GetResponse";
+			Class<?> responseClass = Class.forName(strResponseClass);
+			ApiTelegram responseClassInstance = (ApiTelegram) responseClass.newInstance();
+
+			ObjectMapper mapper = new ObjectMapper();
+			SimpleModule module = new SimpleModule();
+
+			RequestDeserializer apiDeserializer = new RequestDeserializer();
+			apiDeserializer.setRequestClass(requestClassInstance);
+
+			module.addDeserializer(CommonRequest.class, apiDeserializer);
+			mapper.registerModule(module);
+			CommonRequest readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
+			Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + readValue);
 
 
+			// JSON → Java に変換
+			//ApiPostTelegram telegramRequest = (ApiPostTelegram) mapper.readValue(jsonString,requestClass);
+			//Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + telegramRequest);
+
+			SessionManager sessionManager = apiClassInstance.getSessionManager();
+			if(sessionManager.validate(readValue.gettoken()) == false){
+				Util.infoPrintln(LogLevel.LOG_EMERG,"sessionManager.validate = false");
+				throw new BlancoRestException("sessionManager.validate = false");
+			}
 
 			/*
 			API の呼び出し
 			 */
-			ApiGetTelegram telegramResponse = apiClassInstance.action(telegramRequest);
+			ApiGetTelegram telegramResponse = apiClassInstance.action((ApiGetTelegram) readValue.getrequest());
+			// Java → JSON に変換
+
+			CommonResponse commonResponse =  new CommonResponse();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
+			commonResponse.setresponse(telegramResponse);
+			commonResponse.setstatus("SUCCESS");
+			long currentTimeMillis = System.currentTimeMillis();
+			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.settoken(sessionManager.renew(readValue.gettoken(), seed));
+			commonResponse.setlang(readValue.getlang());
+			String json = mapper.writeValueAsString(commonResponse);
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
 			PrintWriter out = response.getWriter();
-			out.println(jsonString);
+			out.println(json);
 			out.close();
 
 		} catch (ClassNotFoundException e) {
@@ -83,7 +118,6 @@ public class MainServlet extends HttpServlet{
 		} catch (BlancoRestException e) {
 			e.printStackTrace();
 		}
-
 
 	}
 
@@ -188,7 +222,93 @@ public class MainServlet extends HttpServlet{
 		if(apiPackage == null){
 			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
 		}
-               	
+		String api = apiPackage + "." + request.getParameter("api");
+		Util.infoPrintln(LogLevel.LOG_DEBUG,"doPut " + api);
+		try {
+			//クラスの名前文字列からクラスのインスタンスを生成
+			Class apiClass = Class.forName(api);
+			ApiBase apiClassInstance = (ApiBase) apiClass.newInstance();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
+
+			createSessionManager(apiClassInstance);
+
+			StringBuilder sb = new StringBuilder();
+			//ボディ部分の情報を取得
+			BufferedReader reader = request.getReader();
+			try {
+				String line;
+				while ((line = reader.readLine()) != null) {//1行ずつ読んで、空行がくるまで
+					sb.append(line).append('\n');//空行があった部分に空行を入れる
+					Util.infoPrintln(LogLevel.LOG_DEBUG,"sb");
+				}
+			} finally {
+				reader.close();
+			}
+			String jsonString = sb.toString();//sbをString型に変換
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"Main jsonString = " + jsonString);
+
+
+			/* HTTP body の JSON を request 電文に詰め替える
+			 */
+			String strRequestClass = api + "PutRequest";
+			Class<?> requestClass = Class.forName(strRequestClass);
+			ApiTelegram requestClassInstance = (ApiTelegram) requestClass.newInstance();
+
+			String strResponseClass = api + "PutResponse";
+			Class<?> responseClass = Class.forName(strResponseClass);
+			ApiTelegram responseClassInstance = (ApiTelegram) responseClass.newInstance();
+
+			ObjectMapper mapper = new ObjectMapper();
+			SimpleModule module = new SimpleModule();
+
+			RequestDeserializer apiDeserializer = new RequestDeserializer();
+			apiDeserializer.setRequestClass(requestClassInstance);
+
+			module.addDeserializer(CommonRequest.class, apiDeserializer);
+			mapper.registerModule(module);
+			CommonRequest readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
+			Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + readValue);
+
+
+			// JSON → Java に変換
+			//ApiPostTelegram telegramRequest = (ApiPostTelegram) mapper.readValue(jsonString,requestClass);
+			//Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + telegramRequest);
+
+			SessionManager sessionManager = apiClassInstance.getSessionManager();
+			if(sessionManager.validate(readValue.gettoken()) == false){
+				Util.infoPrintln(LogLevel.LOG_EMERG,"sessionManager.validate = false");
+				throw new BlancoRestException("sessionManager.validate = false");
+			}
+
+			/*
+			API の呼び出し
+			 */
+			ApiPutTelegram telegramResponse = apiClassInstance.action((ApiPutTelegram) readValue.getrequest());
+			// Java → JSON に変換
+
+			CommonResponse commonResponse =  new CommonResponse();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
+			commonResponse.setresponse(telegramResponse);
+			commonResponse.setstatus("SUCCESS");
+			long currentTimeMillis = System.currentTimeMillis();
+			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.settoken(sessionManager.renew(readValue.gettoken(), seed));
+			commonResponse.setlang(readValue.getlang());
+			String json = mapper.writeValueAsString(commonResponse);
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			PrintWriter out = response.getWriter();
+			out.println(json);
+			out.close();
+
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (BlancoRestException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void doDelete(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
@@ -196,7 +316,93 @@ public class MainServlet extends HttpServlet{
 		if(apiPackage == null){
 			apiPackage = BlancoRestConstants.DEFAULT_PACKAGE;
 		}
-                
+		String api = apiPackage + "." + request.getParameter("api");
+		Util.infoPrintln(LogLevel.LOG_DEBUG,"doDelete " + api);
+		try {
+			//クラスの名前文字列からクラスのインスタンスを生成
+			Class apiClass = Class.forName(api);
+			ApiBase apiClassInstance = (ApiBase) apiClass.newInstance();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
+
+			createSessionManager(apiClassInstance);
+
+			StringBuilder sb = new StringBuilder();
+			//ボディ部分の情報を取得
+			BufferedReader reader = request.getReader();
+			try {
+				String line;
+				while ((line = reader.readLine()) != null) {//1行ずつ読んで、空行がくるまで
+					sb.append(line).append('\n');//空行があった部分に空行を入れる
+					Util.infoPrintln(LogLevel.LOG_DEBUG,"sb");
+				}
+			} finally {
+				reader.close();
+			}
+			String jsonString = sb.toString();//sbをString型に変換
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"Main jsonString = " + jsonString);
+
+
+			/* HTTP body の JSON を request 電文に詰め替える
+			 */
+			String strRequestClass = api + "DeleteRequest";
+			Class<?> requestClass = Class.forName(strRequestClass);
+			ApiTelegram requestClassInstance = (ApiTelegram) requestClass.newInstance();
+
+			String strResponseClass = api + "DeleteResponse";
+			Class<?> responseClass = Class.forName(strResponseClass);
+			ApiTelegram responseClassInstance = (ApiTelegram) responseClass.newInstance();
+
+			ObjectMapper mapper = new ObjectMapper();
+			SimpleModule module = new SimpleModule();
+
+			RequestDeserializer apiDeserializer = new RequestDeserializer();
+			apiDeserializer.setRequestClass(requestClassInstance);
+
+			module.addDeserializer(CommonRequest.class, apiDeserializer);
+			mapper.registerModule(module);
+			CommonRequest readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
+			Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + readValue);
+
+
+			// JSON → Java に変換
+			//ApiPostTelegram telegramRequest = (ApiPostTelegram) mapper.readValue(jsonString,requestClass);
+			//Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + telegramRequest);
+
+			SessionManager sessionManager = apiClassInstance.getSessionManager();
+			if(sessionManager.validate(readValue.gettoken()) == false){
+				Util.infoPrintln(LogLevel.LOG_EMERG,"sessionManager.validate = false");
+				throw new BlancoRestException("sessionManager.validate = false");
+			}
+
+			/*
+			API の呼び出し
+			 */
+			ApiDeleteTelegram telegramResponse = apiClassInstance.action((ApiDeleteTelegram) readValue.getrequest());
+			// Java → JSON に変換
+
+			CommonResponse commonResponse =  new CommonResponse();
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
+			commonResponse.setresponse(telegramResponse);
+			commonResponse.setstatus("SUCCESS");
+			long currentTimeMillis = System.currentTimeMillis();
+			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.settoken(sessionManager.renew(readValue.gettoken(), seed));
+			commonResponse.setlang(readValue.getlang());
+			String json = mapper.writeValueAsString(commonResponse);
+			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			PrintWriter out = response.getWriter();
+			out.println(json);
+			out.close();
+
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (BlancoRestException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void createSessionManager(ApiBase apiClassInstance) {
