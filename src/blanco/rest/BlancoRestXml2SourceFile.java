@@ -862,6 +862,7 @@ public class BlancoRestXml2SourceFile {
         }
     }
 
+
     /**
      * 収集された情報を元に、ソースコードを自動生成します。
      * 
@@ -957,7 +958,7 @@ public class BlancoRestXml2SourceFile {
 
             expandMethodType(argProcessStructure, fieldLook);
         }
-
+        expandMethodGetFieldNames(argProcessStructure);
         expandMethodToString(argProcessStructure);
     }
 
@@ -1132,8 +1133,8 @@ public class BlancoRestXml2SourceFile {
 
         method.getLangDoc().getDescriptionList().add(
                 "オブジェクトのシャロー範囲でしかtoStringされない点に注意して利用してください。");
-        method
-                .setReturn(fCgFactory.createReturn("java.lang.String",
+
+        method.setReturn(fCgFactory.createReturn("java.lang.String",
                         "バリューオブジェクトの文字列表現。"));
 
         List<String> annotators = new ArrayList<>();
@@ -1214,6 +1215,53 @@ public class BlancoRestXml2SourceFile {
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
         listLine.add("return "
                 + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "buf"
+                + BlancoCgLineUtil.getTerminator(fTargetLang));
+    }
+
+    /**
+     * toStringメソッドを展開します。
+     *
+     * @param argProcessStructure
+     */
+    private void expandMethodGetFieldNames(
+            final BlancoRestTelegram argProcessStructure) {
+        final BlancoCgMethod method = fCgFactory.createMethod("getFieldNames",
+                "このリクエスト/レスポンスのフィールド名一覧をString配列の形で返します。");
+        fCgClass.getMethodList().add(method);
+
+        method.setReturn(fCgFactory.createReturn("java.lang.String[]",
+                        "フィールド名一覧"));
+
+        final List<String> listLine = method.getLineList();
+
+        listLine.add(BlancoCgLineUtil.getVariableDeclaration(fTargetLang,
+                "argNames", "String[]", "new String[" +argProcessStructure.getListField().size()+ "]")
+                + BlancoCgLineUtil.getTerminator(fTargetLang));
+
+        for (int indexField = 0; indexField < argProcessStructure
+                .getListField().size(); indexField++) {
+            final BlancoRestTelegramField fieldLook = argProcessStructure
+                    .getListField().get(indexField);
+
+//            String fieldName = fieldLook.getName();
+//            if (fNameAdjust) {
+//                fieldName = BlancoNameAdjuster.toClassName(fieldName);
+//            }
+
+            String strLine = BlancoCgLineUtil
+                    .getVariablePrefix(fTargetLang)
+                    + "argNames["
+                    + indexField
+                    + "] = "
+                    + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang)
+                    + fieldLook.getName()
+                    + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang)
+                    + BlancoCgLineUtil.getTerminator(fTargetLang);
+            listLine.add(strLine);
+        }
+
+        listLine.add("return "
+                + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "argNames"
                 + BlancoCgLineUtil.getTerminator(fTargetLang));
     }
 
