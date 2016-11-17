@@ -7,6 +7,7 @@ import blanco.rest.valueobject.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
@@ -49,25 +50,22 @@ public class MainServlet extends HttpServlet{
 			Class<?> requestClass = Class.forName(strRequestClass);
 			ApiTelegram requestClassInstance = (ApiTelegram) requestClass.newInstance();
 
-			String[] fieldNames = null;
+			Field[] fields = null;
 			try {
-				Method method = requestClassInstance.getClass().getMethod("getFieldNames");
-				fieldNames = (String[])method.invoke(requestClassInstance);
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
+				fields = requestClassInstance.getClass().getDeclaredFields();
+			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
 
-			if(fieldNames.length != 0) {
-				for(int index = 0; index < fieldNames.length; index++) {
-					String fieldName = fieldNames[index];
-					Util.infoPrintln(LogLevel.LOG_DEBUG, "fieldName: " + fieldName);
+			if(fields.length != 0 && fields != null) {
+				for(int index = 0; index < fields.length; index++) {
+					String fieldName = fields[index].getName();
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ fieldName: " + fieldName);
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ methodName: " + "set" + fieldName.substring(1));
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ paramName: " + fieldName.substring(1, 2).toLowerCase() + fieldName.substring(2));
 					try {
-						Method method = requestClassInstance.getClass().getMethod("set" + fieldName.substring(0,1).toUpperCase() + fieldName.substring(1), String.class);
-						method.invoke(requestClassInstance, request.getParameter(fieldName));
+						Method method = requestClassInstance.getClass().getMethod("set" + fieldName.substring(1), String.class);
+						method.invoke(requestClassInstance, request.getParameter(fieldName.substring(1, 2).toLowerCase() + fieldName.substring(2)));
 					} catch (NoSuchMethodException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {
@@ -348,30 +346,29 @@ public class MainServlet extends HttpServlet{
 			Class<?> requestClass = Class.forName(strRequestClass);
 			ApiTelegram requestClassInstance = (ApiTelegram) requestClass.newInstance();
 
-			String[] fieldNames = null;
+			Field[] fields = null;
 			try {
-				Method method = requestClassInstance.getClass().getMethod("getFieldNames");
-				fieldNames = (String[])method.invoke(requestClassInstance);
-			} catch (NoSuchMethodException e) {
-				e.printStackTrace();
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
+				fields = requestClassInstance.getClass().getDeclaredFields();
+			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
 
-			if(fieldNames.length != 0) {
-				for(int index = 0; index < fieldNames.length; index++) {
-					String fieldName = fieldNames[index];
-					Util.infoPrintln(LogLevel.LOG_DEBUG, "fieldName: " + fieldName);
+			if(fields.length != 0 && fields != null) {
+				for(int index = 0; index < fields.length; index++) {
+					String fieldName = fields[index].getName();
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ fieldName: " + fieldName);
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ methodName: " + "set" + fieldName.substring(1));
+					Util.infoPrintln(LogLevel.LOG_DEBUG, "/* debug */ paramName: " + fieldName.substring(1, 2).toLowerCase() + fieldName.substring(2));
 					try {
-						Method method = requestClassInstance.getClass().getMethod("set" + fieldName.substring(0,1).toUpperCase() + fieldName.substring(1), String.class);
-						method.invoke(requestClassInstance, request.getParameter(fieldName));
+						Method method = requestClassInstance.getClass().getMethod("set" + fieldName.substring(1), String.class);
+						method.invoke(requestClassInstance, request.getParameter(fieldName.substring(1, 2).toLowerCase() + fieldName.substring(2)));
 					} catch (NoSuchMethodException e) {
 						e.printStackTrace();
 					} catch (InvocationTargetException e) {
 						e.printStackTrace();
 					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
+					} catch (IllegalAccessException e) {
 						e.printStackTrace();
 					}
 				}
