@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 //import haino.sample.HainoApiSampleGetResponse;
 
@@ -63,12 +65,58 @@ abstract public class ApiBase {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            String json = mapper.writeValueAsString(commonRequest);
-            System.out.println("JSON: " + json);
-            String url = Config.properties.getProperty(Config.apiUrlKey) + this.getClass().getSimpleName();
-            BlancoHttpConnection conn = new BlancoHttpConnection(url);
-            System.out.println("URL: " + url);
-            String responseJson = conn.connect(json, httpMethod);
+
+            String responseJson = null;
+            // GETとDELETEはURLにデータを乗せる
+            if("GET".equalsIgnoreCase(httpMethod) || "DELETE".equalsIgnoreCase(httpMethod)) {
+                Field[] fields = null;
+                try {
+                    fields = request.getClass().getDeclaredFields();
+                } catch (SecurityException e) {
+                    e.printStackTrace();
+                }
+
+                if(fields.length != 0 && fields != null) {
+                    try {
+                        String url = Config.properties.getProperty(Config.apiUrlKey) + this.getClass().getSimpleName();
+                        url += "&token="
+                            + commonRequest.gettoken()
+                            + "&lang="
+                            + commonRequest.getlang();
+                        for (int index = 0; index < fields.length; index++) {
+                            String fieldName = fields[index].getName();
+                            Method method = request.getClass().getMethod("get" + fieldName.substring(1));
+                            String fieldValue = (String) method.invoke(request);
+                            if (fieldValue != null) {
+                                url += "&" + fieldName.substring(1, 2).toLowerCase() + fieldName.substring(2) + "=" + fieldValue;
+                            }
+                        }
+                        Util.infoPrintln(LogLevel.LOG_DEBUG, "URL: " + url);
+                        BlancoHttpConnection conn = new BlancoHttpConnection(url);
+                        responseJson = conn.connect(httpMethod);
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            // POSTとPUTはJsonにデータを乗せる
+            } else if("PUT".equalsIgnoreCase(httpMethod) || "POST".equalsIgnoreCase(httpMethod)) {
+                String json = mapper.writeValueAsString(commonRequest);
+                System.out.println("JSON: " + json);
+                String url = Config.properties.getProperty(Config.apiUrlKey) + this.getClass().getSimpleName();
+                BlancoHttpConnection conn = new BlancoHttpConnection(url);
+                System.out.println("URL: " + url);
+                responseJson = conn.connect(json, httpMethod);
+            } else {
+                Util.infoPrintln(LogLevel.LOG_CRIT,"No method specified");
+                throw  new BlancoRestException("No method specified");
+            }
 
             System.out.println("Response: " + responseJson);
 

@@ -70,18 +70,13 @@ public class BlancoHttpConnection {
     }
 
     /**
-     * @param strJson APIへの送信電文
-     * @return
-     */
-
-    /**
-     * APIへ接続
+     * APIへ接続（GET,DELETE）
      *
-     * @param strJson APIへの送信電文
+     * @param httpMethod GET or DELETE
      * @return Response body. JSON 文字列を期待しています．
      * @throws BlancoRestException
      */
-    public String connectGet(String strJson) throws BlancoRestException {
+    public String connect(String httpMethod) throws BlancoRestException {
 
         String ret = null;
 
@@ -89,17 +84,19 @@ public class BlancoHttpConnection {
             return ret;
         }
 
-        HttpGet get = null;
-        try {
-            get = new HttpGet(strUrl);
-            get.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+        HttpRequestBase request = null;
+        if("GET".equalsIgnoreCase(httpMethod)) {
+            request = new HttpGet(strUrl);
+        } else if("DELETE".equalsIgnoreCase(httpMethod)) {
+            request = new HttpDelete(strUrl);
+        }
 
-        /* data の設定 */
-//            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
-//            post.setEntity(requestEntity);
+        try {
+            request.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+            request.setHeader("Content-Type", "application/json;charset=UTF-8");
 
             client = HttpClients.createDefault();
-            response = client.execute(get);
+            response = client.execute(request);
 
             if (response == null) {
                 throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
@@ -126,156 +123,10 @@ public class BlancoHttpConnection {
     }
 
     /**
-     * APIへ接続
+     * APIへ接続（PUT,POST）
      *
      * @param strJson APIへの送信電文
-     * @return Response body. JSON 文字列を期待しています．
-     * @throws BlancoRestException
-     */
-    public String connectPost(String strJson) throws BlancoRestException {
-
-        String ret = null;
-
-        if (this.strUrl == null) {
-            return ret;
-        }
-
-        HttpPost post = null;
-        try {
-            post = new HttpPost(strUrl);
-            post.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
-
-        /* data の設定 */
-            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
-            post.setEntity(requestEntity);
-
-            client = HttpClients.createDefault();
-            response = client.execute(post);
-
-            if (response == null) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
-            }
-
-            if (response.getStatusLine().getStatusCode() > 300) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
-                        "" + response.getStatusLine().getStatusCode()));
-            }
-
-            HttpEntity responseEntity = response.getEntity();
-            ret = EntityUtils.toString(responseEntity);
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            close();
-        }
-        return ret;
-    }
-    /**
-     * APIへ接続
-     *
-     * @param strJson APIへの送信電文
-     * @return Response body. JSON 文字列を期待しています．
-     * @throws BlancoRestException
-     */
-    public String connectPut(String strJson) throws BlancoRestException {
-
-        String ret = null;
-
-        if (this.strUrl == null) {
-            return ret;
-        }
-
-        HttpPut put = null;
-        try {
-            put = new HttpPut(strUrl);
-            put.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
-
-        /* data の設定 */
-            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
-            put.setEntity(requestEntity);
-
-            client = HttpClients.createDefault();
-            response = client.execute(put);
-
-            if (response == null) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
-            }
-
-            if (response.getStatusLine().getStatusCode() > 300) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
-                        "" + response.getStatusLine().getStatusCode()));
-            }
-
-            HttpEntity responseEntity = response.getEntity();
-            ret = EntityUtils.toString(responseEntity);
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            close();
-        }
-        return ret;
-    }
-    /**
-     * APIへ接続
-     *
-     * @param strJson APIへの送信電文
-     * @return Response body. JSON 文字列を期待しています．
-     * @throws BlancoRestException
-     */
-    public String connectDelete(String strJson) throws BlancoRestException {
-
-        String ret = null;
-
-        if (this.strUrl == null) {
-            return ret;
-        }
-
-        HttpDelete delete = null;
-        try {
-            delete = new HttpDelete(strUrl);
-            delete.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
-
-            client = HttpClients.createDefault();
-            response = client.execute(delete);
-
-            if (response == null) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
-            }
-
-            if (response.getStatusLine().getStatusCode() > 300) {
-                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
-                        "" + response.getStatusLine().getStatusCode()));
-            }
-
-            HttpEntity responseEntity = response.getEntity();
-            ret = EntityUtils.toString(responseEntity);
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            close();
-        }
-        return ret;
-    }
-
-    /**
-     * APIへ接続
-     *
-     * @param strJson APIへの送信電文
+     * @param httpMethod POST or PUT
      * @return Response body. JSON 文字列を期待しています．
      * @throws BlancoRestException
      */
@@ -283,20 +134,52 @@ public class BlancoHttpConnection {
 
         String ret = null;
 
-        if ("GET".equalsIgnoreCase(httpMethod)){
-            ret = connectGet(strJson);
-        }else if("POST".equalsIgnoreCase(httpMethod)){
-            ret = connectPost(strJson);
-        } else if("PUT".equalsIgnoreCase(httpMethod)){
-            ret = connectPut(strJson);
-        }else if("DELETE".equalsIgnoreCase(httpMethod)){
-            ret = connectDelete(strJson);
-        }else {
-            Util.infoPrintln(LogLevel.LOG_CRIT,"No method specified");
-            throw  new BlancoRestException("No method specified");
+        if (this.strUrl == null) {
+            return ret;
+        }
+
+        HttpEntityEnclosingRequestBase request = null;
+        if("POST".equalsIgnoreCase(httpMethod)) {
+            request = new HttpPost(strUrl);
+        } else if("PUT".equalsIgnoreCase(httpMethod)) {
+            request = new HttpPut(strUrl);
+        }
+
+        try {
+            request.setHeader("User-Agent", Config.properties.getProperty(Config.userAgentKey));
+            request.setHeader("Content-Type", "application/json;charset=UTF-8");
+
+        /* data の設定 */
+            HttpEntity requestEntity = new ByteArrayEntity(strJson.getBytes("UTF-8"));
+            request.setEntity(requestEntity);
+
+            client = HttpClients.createDefault();
+            response = client.execute(request);
+
+            if (response == null) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg03());
+            }
+
+            if (response.getStatusLine().getStatusCode() > 300) {
+                throw new BlancoRestException(fBundle.getBlancorestErrorMsg04(
+                        "" + response.getStatusLine().getStatusCode()));
+            }
+
+            HttpEntity responseEntity = response.getEntity();
+            ret = EntityUtils.toString(responseEntity);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            close();
         }
         return ret;
     }
+
 
     /**
      * 接続を閉じます
