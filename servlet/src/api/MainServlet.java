@@ -121,6 +121,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.setlang(lang);
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			response.setContentType("application/json;charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			out.println(json);
 			out.close();
@@ -216,6 +217,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.setlang(readValue.getlang());
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			response.setContentType("application/json;charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			out.println(json);
 			out.close();
@@ -312,6 +314,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.setlang(readValue.getlang());
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			response.setContentType("application/json;charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			out.println(json);
 			out.close();
@@ -419,6 +422,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.setlang(lang);
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+			response.setContentType("application/json;charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			out.println(json);
 			out.close();

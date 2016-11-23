@@ -107,6 +107,8 @@ public class BlancoHttpConnection {
                         "" + response.getStatusLine().getStatusCode()));
             }
 
+            // 多分関係ないけど一応
+            response.setHeader("Content-Type", "application/json;charset=UTF-8");
             HttpEntity responseEntity = response.getEntity();
             ret = EntityUtils.toString(responseEntity);
 
@@ -165,6 +167,8 @@ public class BlancoHttpConnection {
                         "" + response.getStatusLine().getStatusCode()));
             }
 
+            // 多分関係ないけど一応
+            response.setHeader("Content-Type", "application/json;charset=UTF-8");
             HttpEntity responseEntity = response.getEntity();
             ret = EntityUtils.toString(responseEntity);
 
