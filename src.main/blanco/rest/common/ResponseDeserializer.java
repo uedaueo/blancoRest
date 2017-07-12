@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 
+import javax.xml.ws.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,11 +38,9 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
             throws IOException, JsonProcessingException {
         JsonNode node = jp.getCodec().readTree(jp);
 
-        String token = null;
-        String lang = null;
+        ResponseHeader info = null;
         String status = null;
-        int code = 0;
-        String msg = null;
+        ArrayList<ErrorItem> errors = null;
         JsonNode response = null;
 
         Iterator<Map.Entry<String, JsonNode>> fieldIte = node.fields();
@@ -49,17 +48,13 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
             Map.Entry<String, JsonNode> fieldEntry = fieldIte.next();
             JsonNode value = fieldEntry.getValue();
             if (value != null) {
-                if ("token".equalsIgnoreCase(fieldEntry.getKey())) {
-                    token = value.asText();
-                } else if ("lang".equalsIgnoreCase(fieldEntry.getKey())) {
-                    lang = value.asText();
+                if ("info".equalsIgnoreCase(fieldEntry.getKey())) {
+                    info = this.parseResponseHeaser(value);
                 } else if ("status".equalsIgnoreCase(fieldEntry.getKey())) {
                     status = value.asText();
-                } else if ("code".equalsIgnoreCase(fieldEntry.getKey())) {
-                    code = value.asInt();
-                } else if ("msg".equalsIgnoreCase(fieldEntry.getKey())) {
-                    msg = value.asText();
-                } else if ("response".equalsIgnoreCase(fieldEntry.getKey())) {
+                } else if ("errors".equalsIgnoreCase(fieldEntry.getKey())) {
+                    errors = this.parseErrrors(value);
+                } else if ("telegram".equalsIgnoreCase(fieldEntry.getKey())) {
                     response = value;
                 }
             }
@@ -68,11 +63,9 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
 
         Util.infoPrintln(LogLevel.LOG_DEBUG,"deserialize");
         CommonResponse cr = new CommonResponse();
-        cr.settoken(token);
-        cr.setlang(lang);
+        cr.setinfo(info);
         cr.setstatus(status);
-        cr.setcode(code);
-        cr.setmessage(msg);
+
         ObjectMapper mapper = new ObjectMapper();
 
         ApiTelegram responseClassInstance = null;
@@ -80,10 +73,71 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
             responseClassInstance = mapper.convertValue(response, this.responseClass.getClass());
         }
 
-        cr.setresponse(responseClassInstance);
-
+        cr.settelegram(responseClassInstance);
 
         return cr;
+    }
+
+    private ResponseHeader parseResponseHeaser(JsonNode node) {
+        ResponseHeader header = new ResponseHeader();
+
+        String token = null;
+        String lang = null;
+
+        Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
+        while(fieldIte.hasNext()){
+            Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
+            JsonNode value = fieldEntry.getValue();
+            if(value != null){
+                if("token".equalsIgnoreCase(fieldEntry.getKey())){
+                    token = value.asText();
+                } else if ("lang".equalsIgnoreCase(fieldEntry.getKey())){
+                    lang = value.asText();
+                }
+            }
+        }
+
+        header.settoken(token);
+        header.setlang(lang);
+
+        return header;
+    }
+
+    private ArrayList<ErrorItem> parseErrrors(JsonNode node) {
+        ArrayList<ErrorItem> errors = null;
+
+        if (node.isArray()) {
+            errors = new ArrayList<>();
+            for (JsonNode itemNode : node) {
+                ErrorItem errorItem = parseErrorItem(itemNode);
+                errors.add(errorItem);
+            }
+        }
+
+        return errors;
+    }
+
+    private ErrorItem parseErrorItem(JsonNode node) {
+        ErrorItem errorItem = new ErrorItem();
+
+        String code = null;
+        ArrayList<String> messages = new ArrayList<>();
+
+        Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
+        while(fieldIte.hasNext()){
+            Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
+            JsonNode value = fieldEntry.getValue();
+            if(value != null){
+                if("code".equalsIgnoreCase(fieldEntry.getKey())){
+                    code = value.asText();
+                } else if ("messages".equalsIgnoreCase(fieldEntry.getKey())){
+                    value.isArray();
+                }
+            }
+        }
+
+
+        return errorItem;
     }
 
     public ApiTelegram getResponseClass() {

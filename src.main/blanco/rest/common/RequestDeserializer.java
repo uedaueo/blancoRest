@@ -33,9 +33,46 @@ public class RequestDeserializer extends StdDeserializer<CommonRequest>{
     public CommonRequest deserialize(JsonParser jp, DeserializationContext ctxt)
         throws IOException, JsonProcessingException {
         JsonNode node = jp.getCodec().readTree(jp);
+
+        RequestHeader info = null;
+        JsonNode request = null;
+
+        Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
+        while(fieldIte.hasNext()){
+            Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
+            JsonNode value = fieldEntry.getValue();
+            if(value != null){
+                if("info".equalsIgnoreCase(fieldEntry.getKey())){
+                    info = this.parseRequestHeaser(value);
+                }else if ("telegram".equalsIgnoreCase(fieldEntry.getKey())){
+                    request = value;
+                }
+            }
+        }
+
+
+        Util.infoPrintln(LogLevel.LOG_DEBUG,"deserialize");
+        CommonRequest cr = new CommonRequest();
+        cr.setinfo(info);
+        ObjectMapper mapper = new ObjectMapper();
+
+        ApiTelegram requestClassInstance = null;
+        if (request != null){
+            requestClassInstance = mapper.convertValue(request, this.requestClass.getClass());
+        }
+
+        cr.settelegram(requestClassInstance);
+
+      return cr;
+    }
+
+    private RequestHeader parseRequestHeaser(JsonNode node) {
+        RequestHeader header = new RequestHeader();
+
         String token = null;
         String lang = null;
-        JsonNode request = null;
+
+
         Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
         while(fieldIte.hasNext()){
             Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
@@ -45,27 +82,14 @@ public class RequestDeserializer extends StdDeserializer<CommonRequest>{
                     token = value.asText();
                 }else if ("lang".equalsIgnoreCase(fieldEntry.getKey())){
                     lang = value.asText();
-                }else if ("request".equalsIgnoreCase(fieldEntry.getKey())){
-                    request = value;
                 }
             }
         }
 
+        header.settoken(token);
+        header.setlang(lang);
 
-        Util.infoPrintln(LogLevel.LOG_DEBUG,"deserialize");
-        CommonRequest cr = new CommonRequest();
-        cr.settoken(token);
-        cr.setlang(lang);
-        ObjectMapper mapper = new ObjectMapper();
-
-        ApiTelegram requestClassInstance = null;
-        if (request != null){
-            requestClassInstance = mapper.convertValue(request, this.requestClass.getClass());
-        }
-
-        cr.setrequest(requestClassInstance);
-
-      return cr;
+        return header;
     }
 
     public ApiTelegram getRequestClass() {

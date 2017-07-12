@@ -171,7 +171,7 @@ public class BlancoRestXml2SourceFile {
                             .getMeta2xmlProcessCommon());
             if (elementCommon == null) {
                 // commonが無い場合には、このシートの処理をスキップします。
-                System.out.println("BlancoRestXmlSourceFile#processTelegramProcess !!! NO COMMON !!!");
+                // System.out.println("BlancoRestXmlSourceFile#processTelegramProcess !!! NO COMMON !!!");
                 continue;
             }
 
@@ -180,7 +180,7 @@ public class BlancoRestXml2SourceFile {
 
             if (BlancoStringUtil.null2Blank(name).trim().length() == 0) {
                 // nameが空の場合には処理をスキップします。
-                System.out.println("BlancoRestXmlSourceFile#processTelegramProcess !!! NO NAME !!!");
+                // System.out.println("BlancoRestXmlSourceFile#processTelegramProcess !!! NO NAME !!!");
                 continue;
             }
 
@@ -425,7 +425,7 @@ public class BlancoRestXml2SourceFile {
             final Object nodeField = listField.get(indexField);
 
             if (nodeField instanceof BlancoXmlElement == false) {
-                System.out.println("BlancoRestXml2SourceFile#parseTelegramSheet: NO FIELD !!!");
+                // System.out.println("BlancoRestXml2SourceFile#parseTelegramSheet: NO FIELD !!!");
                 continue;
             }
 
@@ -596,8 +596,6 @@ public class BlancoRestXml2SourceFile {
 
         /* ここからはAPIメソッドごとの生成 */
         for(int i = 0; i < 4; i++) {
-            BlancoRestTelegram input = argListTelegrams[i][TELEGRAM_INPUT];
-            BlancoRestTelegram output = argListTelegrams[i][TELEGRAM_OUTPUT];
 
             if ((argListTelegrams[i][TELEGRAM_INPUT] != null) && (argListTelegrams[i][TELEGRAM_OUTPUT] != null)) {
                 //System.out.println("(process)### method = " + output.getTelegramMethod());
@@ -606,7 +604,27 @@ public class BlancoRestXml2SourceFile {
                 // base class からの abstract method の実装
                 createExecuteMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
             } else {
-                createExecuteMethodNotImplemented(requestIdName[i], responseIdName[i], argListTelegrams[i]);
+                String defaultApiRequestId = null;
+                String defaultApiResponseId = null;
+                switch (i) {
+                    case 0:
+                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_REQUESTID;
+                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_RESPONSEID;
+                        break;
+                    case 1:
+                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_REQUESTID;
+                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_RESPONSEID;
+                        break;
+                    case 2:
+                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_REQUESTID;
+                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_RESPONSEID;
+                        break;
+                    case 3:
+                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_REQUESTID;
+                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_RESPONSEID;
+                        break;
+                }
+                createExecuteMethodNotImplemented(requestIdName[i], responseIdName[i], defaultApiRequestId, defaultApiResponseId);
             }
         }
         /* getter, setterがまとまるように、process, executeとは別にfor文を回す
@@ -736,15 +754,22 @@ public class BlancoRestXml2SourceFile {
 
     }
 
-    private void createExecuteMethodNotImplemented(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
+    private void createExecuteMethodNotImplemented(String requestId, String responseId, String defaultApiResquestId, String defaultApiResponseId) {
         final BlancoCgMethod cgExecutorMethod = fCgFactory.createMethod(
                 BlancoRestConstants.BASE_EXECUTOR_METHOD, fBundle.getXml2sourceFileExecutorDescription());
         fCgClass.getMethodList().add(cgExecutorMethod);
         cgExecutorMethod.setAccess("protected");
         final List<String> ListLine = cgExecutorMethod.getLineList();
 
-//        BlancoRestTelegram input = argListTelegrams[TELEGRAM_INPUT];
-//        BlancoRestTelegram output = argListTelegrams[TELEGRAM_OUTPUT];
+        // 電文定義がないので，デフォルトの電文名を指定しておく
+        String requestSubId = requestId;
+        String requestCastId = /*input.getPackage() + "." + */requestId;
+        /* ApiBaseのabstract methodで電文の親クラスを指定したので、ここでもそうする */
+        requestId = defaultApiResquestId;
+
+        String responseSubId = responseId;
+//        responseId = output.getPackage() + "." + responseId;
+        responseId = defaultApiResponseId;
 
         /* Excel sheet に電文定義がない場合にここにくるので、その場合は電文処理シートの定義を使う */
         cgExecutorMethod.getParameterList().add(
@@ -771,7 +796,7 @@ public class BlancoRestXml2SourceFile {
         //throw new BlancoRestException("GetMethod is not implemented in this api");
         ListLine.add(
                 "throw new " + BlancoRestConstants.DEFAULT_EXCEPTION + "( " + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang) +
-                        fBundle.getBlancorestErrorMsg05(requestId) + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang)  +")" + BlancoCgLineUtil.getTerminator(fTargetLang));
+                        fBundle.getBlancorestErrorMsg05(requestCastId) + BlancoCgLineUtil.getStringLiteralEnclosure(fTargetLang)  +")" + BlancoCgLineUtil.getTerminator(fTargetLang));
 
 //        ListLine.add(
 //                responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
@@ -785,6 +810,7 @@ public class BlancoRestXml2SourceFile {
 //                + BlancoCgLineUtil.getTerminator(fTargetLang));
 
     }
+
     private void overrideAuthenticationRequired(BlancoRestTelegramProcess argStructure) {
         String methodName = BlancoRestConstants.API_AUTHENTICATION_REQUIRED;
 
