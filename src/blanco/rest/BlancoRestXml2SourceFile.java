@@ -817,7 +817,7 @@ public class BlancoRestXml2SourceFile {
         final BlancoCgMethod cgAuthenticationRequiredMethod = fCgFactory.createMethod(
                 methodName, fBundle.getXml2sourceFileAuthflagDescription());
         fCgClass.getMethodList().add(cgAuthenticationRequiredMethod);
-        cgAuthenticationRequiredMethod.setAccess("protected");
+        cgAuthenticationRequiredMethod.setAccess("public");
 
         cgAuthenticationRequiredMethod.setReturn(fCgFactory.createReturn("java.lang.Boolean",
                 fBundle.getXml2sourceFileAuthflagReturnLangdoc()));

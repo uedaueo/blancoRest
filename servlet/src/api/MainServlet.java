@@ -58,7 +58,7 @@ public class MainServlet extends HttpServlet{
 
 	}
 
-	private void actionDispatcher(String method, HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		try {
 			// API クラスのインスタンスを生成
@@ -66,7 +66,7 @@ public class MainServlet extends HttpServlet{
 			Util.infoPrintln(LogLevel.LOG_DEBUG,apiClassInstance.toString());
 
 			String jsonString = null;
-			if ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)) {
+			if ("POST".equalsIgnoreCase(httpMethod) || "PUT".equalsIgnoreCase(httpMethod)) {
 				// Body から JSON 文字列を取得
 				jsonString = this.getJsonFromBody(request);
 			} else {
@@ -77,7 +77,7 @@ public class MainServlet extends HttpServlet{
 
 			/* JSON 文字列を request 電文に詰め替える
 			 */
-			ApiTelegram requestClassInstance = apiClassInstance.newRequestInstance(method);
+			ApiTelegram requestClassInstance = apiClassInstance.newRequestInstance(httpMethod);
 			// ApiTelegram responseClassInstance = apiClassInstance.newResponseInstance("POST");
 
 			CommonRequest commonRequest = createCommonRequest(jsonString, requestClassInstance);
@@ -91,7 +91,7 @@ public class MainServlet extends HttpServlet{
 
 			// セッション情報の確認
 			SessionManager sessionManager = apiClassInstance.getSessionManager();
-			if(sessionManager.validate(token) == false){
+			if (apiClassInstance.isAuthenticationRequired() && sessionManager.validate(token) == false){
 				Util.infoPrintln(LogLevel.LOG_EMERG,"sessionManager.validate = false");
 				throw new BlancoRestException("sessionManager.validate = false");
 			}
@@ -99,9 +99,16 @@ public class MainServlet extends HttpServlet{
 			/*
 			API の呼び出し
 			 */
-			ApiPostTelegram telegramResponse = apiClassInstance.action((ApiPostTelegram) commonRequest.gettelegram());
-			// Java → JSON に変換
-
+			ApiTelegram telegramResponse = null;
+			if ("GET".equalsIgnoreCase(httpMethod)) {
+				telegramResponse = apiClassInstance.action((ApiGetTelegram) commonRequest.gettelegram());
+			} else if ("POST".equalsIgnoreCase(httpMethod)) {
+				telegramResponse = apiClassInstance.action((ApiPostTelegram) commonRequest.gettelegram());
+			} else if ("PUT".equalsIgnoreCase(httpMethod)) {
+				telegramResponse = apiClassInstance.action((ApiPutTelegram) commonRequest.gettelegram());
+			} else if ("DELETE".equalsIgnoreCase(httpMethod)) {
+				telegramResponse = apiClassInstance.action((ApiDeleteTelegram) commonRequest.gettelegram());
+			}
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"telegramResponse = " + telegramResponse);
 
 			CommonResponse commonResponse = apiClassInstance.getResponse();
@@ -112,7 +119,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.getinfo().settoken(sessionManager.renew(token, seed));
 			commonResponse.getinfo().setlang(lang);
 
-
+			// Java → JSON に変換
 			ObjectMapper mapper = new ObjectMapper();
 			String json = mapper.writeValueAsString(commonResponse);
 			Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);

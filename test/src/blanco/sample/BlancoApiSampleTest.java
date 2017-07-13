@@ -3,10 +3,8 @@ package blanco.sample;
 
 
 import blanco.rest.Exception.BlancoRestException;
-import blanco.rest.common.ApiBase;
 import blanco.rest.common.LogLevel;
 import blanco.rest.common.Util;
-import blanco.sample.valueobject.BlancoObjectSample;
 import blanco.sample.valueobject.ObjectSample;
 import org.junit.After;
 import org.junit.Before;
@@ -53,7 +51,7 @@ public class BlancoApiSampleTest {
 
 
         String token = "toke";
-        String lang = "jp";
+        String lang = "ja";
 
         BlancoApiSamplePostRequest request = new BlancoApiSamplePostRequest();
 
@@ -83,25 +81,25 @@ public class BlancoApiSampleTest {
         objectSample.setarrayField(arrayList6);
         request.setField6(objectSample);
 
-        BlancoObjectSample BlancoObjectSample = new BlancoObjectSample();
-        BlancoObjectSample.setstringField1("BlancoObjectSample");
+        ObjectSample blancoObjectSample = new ObjectSample();
+        blancoObjectSample.setstringField1("BlancoObjectSample");
         //BlancoObjectSample.setbooleanField1(true);
         //BlancoObjectSample.setintField1(71);
         ArrayList<String> arrayList7 = new ArrayList<>();
         arrayList7.add("arrayList71");
         arrayList7.add("arrayList72");
         //BlancoObjectSample.setarrayField(arrayList7);
-        request.setObjectSample(BlancoObjectSample);
+        request.setObjectSample(blancoObjectSample);
 
-        ArrayList<BlancoObjectSample> aBlancoObjectSample = new ArrayList<>();
+        ArrayList<ObjectSample> aBlancoObjectSample = new ArrayList<>();
         // 配列は幾つにしますか？
 
         for (int i = 0; i < 2; i++) {
-            aBlancoObjectSample.add(new BlancoObjectSample());
+            aBlancoObjectSample.add(new ObjectSample());
         }
 
         // 配列の一つ目
-        BlancoObjectSample obj = aBlancoObjectSample.get(0);
+        ObjectSample obj = aBlancoObjectSample.get(0);
         obj.setstringField1("a");
         //obj.setbooleanField1(true);
         //obj.setintField1(51);

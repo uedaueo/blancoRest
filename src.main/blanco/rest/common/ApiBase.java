@@ -8,12 +8,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 //import haino.sample.HainoApiSampleGetResponse;
 
@@ -62,6 +59,14 @@ abstract public class ApiBase {
         return response;
     }
 
+
+    /**
+     * 自動生成されたabstractクラスでoverrideされる事を想定しています
+     */
+    public Boolean isAuthenticationRequired() {
+        return true;
+    }
+
     public static SessionManager getSessionManager() {
         return sessionManager;
     }
@@ -72,11 +77,16 @@ abstract public class ApiBase {
 
     final private ApiTelegram sendTo(ApiTelegram request, String httpMethod) throws BlancoRestException {
         ApiTelegram response = null;
-        CommonRequest commonRequest = new CommonRequest();
-        RequestHeader info = new RequestHeader();
-        commonRequest.setinfo(info);
-        info.settoken("dummy");
-        info.setlang("ja");
+
+        CommonRequest commonRequest = this.getRequest();
+        if (commonRequest == null) {
+            commonRequest = new CommonRequest();
+            RequestHeader info = new RequestHeader();
+            commonRequest.setinfo(info);
+            info.settoken("dummy");
+            info.setlang("ja");
+        }
+
         commonRequest.settelegram(request);
 
         CommonResponse commonResponse = null;
@@ -129,6 +139,9 @@ abstract public class ApiBase {
             System.out.println("ApiBase#commonResponse" + commonResponse);
 
             if(commonResponse != null){
+
+                this.setResponse(commonResponse);
+
                 if (BlancoRestConstants.API_STATUS_ACCEPTED.equalsIgnoreCase(commonResponse.getstatus())){
                     response = commonResponse.gettelegram();
                 }else {
