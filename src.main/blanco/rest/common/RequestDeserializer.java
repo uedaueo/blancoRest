@@ -40,6 +40,7 @@ public class RequestDeserializer extends StdDeserializer<CommonRequest>{
         Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
         while(fieldIte.hasNext()){
             Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
+            Util.infoPrintln(LogLevel.LOG_DEBUG, "RequestDeserializer: key = " + fieldEntry.getKey());
             JsonNode value = fieldEntry.getValue();
             if(value != null){
                 if("info".equalsIgnoreCase(fieldEntry.getKey())){

@@ -116,6 +116,7 @@ public class MainServlet extends HttpServlet{
 			commonResponse.setstatus(BlancoRestConstants.API_STATUS_ACCEPTED);
 			long currentTimeMillis = System.currentTimeMillis();
 			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.setinfo(new ResponseHeader());
 			commonResponse.getinfo().settoken(sessionManager.renew(token, seed));
 			commonResponse.getinfo().setlang(lang);
 
@@ -149,7 +150,7 @@ public class MainServlet extends HttpServlet{
 			String line;
 			while ((line = reader.readLine()) != null) {//1行ずつ読んで、空行がくるまで
 				sb.append(line).append('\n');//空行があった部分に空行を入れる
-				Util.infoPrintln(LogLevel.LOG_DEBUG,"sb");
+				// Util.infoPrintln(LogLevel.LOG_DEBUG,"sb");
 			}
 		} finally {
 			reader.close();
@@ -161,7 +162,6 @@ public class MainServlet extends HttpServlet{
 	}
 
 	private CommonRequest createCommonRequest(String jsonString, ApiTelegram requestClassInstance) throws IOException {
-		CommonRequest req = new CommonRequest();
 
 		ObjectMapper mapper = new ObjectMapper();
 		SimpleModule module = new SimpleModule();
@@ -173,7 +173,12 @@ public class MainServlet extends HttpServlet{
 		mapper.registerModule(module);
 		CommonRequest readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
 
-		return req;
+		if (readValue == null) {
+			Util.infoPrintln(LogLevel.LOG_ERR, "MainServlet#createCommonRequest: Fail to read CommonRequest. readValue returns null.");
+			readValue = new CommonRequest();
+		}
+
+		return readValue;
 	}
 
 	private ApiBase newApiClassInstance(HttpServletRequest request) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
