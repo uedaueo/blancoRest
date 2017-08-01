@@ -186,10 +186,16 @@ public class BlancoRestXml2SourceFile {
 
             System.out.println("BlancoRestXmlSourceFile#processTelegramProcess name = " + name);
 
+            // 継承情報を取得します．
+            final BlancoXmlElement elementExtends = BlancoXmlBindingUtil
+                    .getElement(elementSheet, fBundle
+                            .getMeta2xmlProcessExtends());
+
             // 電文処理には一覧情報はありません
 
             // シートから詳細な情報を取得します。
-            final BlancoRestTelegramProcess structure = parseProcessSheet(elementCommon);
+            final BlancoRestTelegramProcess structure = parseProcessSheet(
+                    elementCommon, elementExtends);
 
             if (structure != null) {
                 // メタ情報の解析結果をもとにソースコード自動生成を実行します。
@@ -199,7 +205,9 @@ public class BlancoRestXml2SourceFile {
         }
     }
 
-    private BlancoRestTelegramProcess parseProcessSheet(final BlancoXmlElement argElementCommon) {
+    private BlancoRestTelegramProcess parseProcessSheet(
+            final BlancoXmlElement argElementCommon,
+            final BlancoXmlElement argElementExtends) {
 
         final BlancoRestTelegramProcess structure = new BlancoRestTelegramProcess();
         structure.setName(BlancoXmlBindingUtil.getTextContent(
@@ -212,6 +220,21 @@ public class BlancoRestXml2SourceFile {
             throw new IllegalArgumentException(fBundle
                     .getXml2sourceFileErr001(structure.getName()));
         }
+
+        // 継承情報を処理する
+        String superClass = null;
+        if (argElementExtends != null) {
+            superClass = BlancoXmlBindingUtil.getTextContent(
+                    argElementExtends, "superClass");
+            if (superClass != null) {
+                String myPackage = BlancoXmlBindingUtil.getTextContent(
+                        argElementExtends, "package");
+                if (myPackage != null) {
+                    superClass = myPackage + "." + superClass;
+                }
+            }
+        }
+        structure.setSuperClass(superClass);
 
         if (BlancoXmlBindingUtil
                 .getTextContent(argElementCommon, "description") != null) {
@@ -298,13 +321,18 @@ public class BlancoRestXml2SourceFile {
 
             System.out.println("/* tueda */ BlancoRestXmlSourceFile#process name = " + name);
 
+            // 継承情報を取得します
+            final BlancoXmlElement elementExtends = BlancoXmlBindingUtil
+                    .getElement(elementSheet, fBundle.getMeta2xmlTelegramExtends());
+
+
             // 一覧情報を取得します。
             final BlancoXmlElement elementList = BlancoXmlBindingUtil
                     .getElement(elementSheet, fBundle.getMeta2xmlTeregramList());
 
             // シートから詳細な情報を取得します。
             final BlancoRestTelegram processTelegram = parseTelegramSheet(
-                    elementCommon, elementList);
+                    elementCommon, elementExtends, elementList);
 
             // 電文をHTTPメソッド×IN-OUTの2次元配列に格納する
             if (processTelegram != null) {
@@ -369,6 +397,7 @@ public class BlancoRestXml2SourceFile {
      */
     private BlancoRestTelegram parseTelegramSheet(
             final BlancoXmlElement argElementCommon,
+            final BlancoXmlElement argElementExtends,
             final BlancoXmlElement argElementList) {
 
         final BlancoRestTelegram processTelegram = new BlancoRestTelegram();
@@ -395,21 +424,37 @@ public class BlancoRestXml2SourceFile {
         processTelegram.setTelegramType(BlancoXmlBindingUtil.getTextContent(
                 argElementCommon, "type"));
 
-        String superClass = BlancoXmlBindingUtil.getTextContent(
-                argElementCommon, "superClass");
-
         processTelegram.setTelegramMethod(BlancoXmlBindingUtil.getTextContent(
                 argElementCommon, "telegramMethod"));
 
-        /*
-         * 入力シートが Java 以外の場合にも対応します．
-         * 現時点では PHP のみです．
-         */
-        switch (fSheetLang) {
-            case BlancoCgSupportedLang.PHP:
-                superClass = adjustClassNamePhp2Java(superClass, null);
-                break;
+        String superClass = null;
+
+        if (argElementExtends != null) {
+            superClass = BlancoXmlBindingUtil.getTextContent(
+                    argElementExtends, "superClass");
+            if (superClass != null) {
+                String myPackage = BlancoXmlBindingUtil.getTextContent(
+                        argElementExtends, "package");
+                if (myPackage != null) {
+                    superClass = myPackage + "." + superClass;
+                }
+            }
+        }
+
+        if (superClass == null) {
+            // 従来通りの親クラスの継承
+            superClass = BlancoXmlBindingUtil.getTextContent(
+                    argElementCommon, "superClass");
+            /*
+             * 入力シートが Java 以外の場合にも対応します．
+             * 現時点では PHP のみです．
+             */
+            switch (fSheetLang) {
+                case BlancoCgSupportedLang.PHP:
+                    superClass = adjustClassNamePhp2Java(superClass, null);
+                    break;
             /* 対応言語を増やす場合はここに case を追記します */
+            }
         }
 
         processTelegram.setTelegramSuperClass(superClass);
@@ -545,7 +590,11 @@ public class BlancoRestXml2SourceFile {
                         .getDescription()));
         // ApiBase クラスを継承
         BlancoCgType fCgType = new BlancoCgType();
-        fCgType.setName(BlancoRestConstants.BASE_CLASS);
+        String superClass = argStructure.getSuperClass();
+        if (superClass == null) {
+            superClass = BlancoRestConstants.BASE_CLASS;
+        }
+        fCgType.setName(superClass);
         fCgClass.setExtendClassList(new ArrayList<BlancoCgType>());
         fCgClass.getExtendClassList().add(fCgType);
 

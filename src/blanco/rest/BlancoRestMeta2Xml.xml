@@ -20,9 +20,11 @@
                 <propertykey name="superClass" waitX="2">
                     <value>電文の親クラス</value>
                 </propertykey>
+                <!--
                 <propertykey name="namespace" waitX="2">
                     <value>名前空間</value>
                 </propertykey>
+                -->
                 <propertykey name="package" waitX="2">
                     <value>パッケージ</value>
                 </propertykey>
@@ -35,6 +37,16 @@
                     <result>Output</result>
                     <source>応答電文(S→C)</source>
                 </valuemapping>
+            </propertyblock>
+
+            <propertyblock name="blancotelegram-extends" waitY="1">
+                <startstring>電文定義・継承</startstring>
+                <propertykey name="superClass" waitX="2">
+                    <value>クラス名</value>
+                </propertykey>
+                <propertykey name="package" waitX="2">
+                    <value>パッケージ</value>
+                </propertykey>
             </propertyblock>
 
             <tableblock name="blancotelegram-list" waitY="2" titleheight="3" rowname="field">
@@ -129,6 +141,16 @@
                 </propertykey>
                 <propertykey name="location" waitX="1">
                     <value>ロケーション</value>
+                </propertykey>
+            </propertyblock>
+
+            <propertyblock name="blancotelegramprocess-extends" waitY="1">
+                <startstring>電文処理定義・継承</startstring>
+                <propertykey name="superClass" waitX="2">
+                    <value>クラス名</value>
+                </propertykey>
+                <propertykey name="package" waitX="2">
+                    <value>パッケージ</value>
                 </propertykey>
             </propertyblock>
 
