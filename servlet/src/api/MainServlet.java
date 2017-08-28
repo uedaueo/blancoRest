@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.Random;
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -23,7 +24,9 @@ public class MainServlet extends HttpServlet{
 	@Override
 	public void init(){
 		System.out.println("MainServlet#init()");
-		new Config();
+
+		this.loadSettings();
+
 		random = new SecureRandom();
 		random.setSeed(Thread.currentThread().getId());
 
@@ -218,5 +221,44 @@ public class MainServlet extends HttpServlet{
 			sessionManagerImpl = new SessionManagerImpl();
 		}
 		ApiBase.setSessionManager(sessionManagerImpl);
+	}
+
+	private void loadSettings() {
+
+		/*
+		 * web.xmlで定義されている初期パラメータを取得
+		 * ここで読み込むのは ConfigDir と SystemId のみ．
+		 */
+		Enumeration params = getInitParameterNames();
+
+		while (params.hasMoreElements()) {
+			String param = (String) params.nextElement();
+			Config.properties.put(param, getInitParameter(param));
+		}
+
+		Util.infoPrintln(LogLevel.LOG_DEBUG, "MainServlet#loadSettings : Web.xml is read");
+
+		String ConfigDir = Config.properties.getProperty(Config.configDirKey);
+		String SystemId = Config.properties.getProperty(Config.systemIdKey);
+		String settings = null;
+
+
+		try {
+			if (ConfigDir == null || SystemId == null) {
+				settings = BlancoRestConstants.CONFIG_FILE;
+			} else {
+				settings = ConfigDir + "/" + SystemId + ".xml";
+				File file = new File(settings);
+				if (!file.exists()){
+					Util.infoPrintln(LogLevel.LOG_ERR, "MainServlet#loadSettings : NO SUCH FILE : " + settings);
+					settings = BlancoRestConstants.CONFIG_FILE;
+				}
+			}
+			Util.infoPrintln(LogLevel.LOG_DEBUG, "MainServlet#loadSettings : reading ... " + settings);
+			new Config(settings);
+		} catch (IOException e) {
+			Util.infoPrintln(LogLevel.LOG_CRIT, "!!! CAN NOT READ CONFIGs !!!");
+			e.printStackTrace();
+		}
 	}
 }

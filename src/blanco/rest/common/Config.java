@@ -14,16 +14,25 @@ public class Config {
 
     public static Properties properties = new Properties();
 
-    public Config(){
-        System.out.println("Config");
+    public Config() throws IOException {
         read(BlancoRestConstants.CONFIG_FILE);
     }
 
-    public Config(String filename){
+    public Config(String filename) throws IOException {
         read(filename);
     }
 
+    /*
+     * web.xml で定義
+     */
+    /** SystemId, ユーザ設定ファイルのファイル名もこれを使う */
+    public static final String systemIdKey = "SystemId";
+    /** 設定ファイルの設置ディレクトリ */
+    public static final String configDirKey = "ConfigDir";
 
+    /*
+     * ユーザ設定ファイルで定義
+     */
     /** API サーバのURL */
     public static final String apiUrlKey = "ApiUrl"; //"http://10.211.55.4/dapanda/";
     /** BASIC 認証id */
@@ -51,15 +60,11 @@ public class Config {
 
     //public static final String langKey = "Lang";//"ja";
 
-    private void read(String filename) {
-        try {
-            System.out.println("read filename = " + filename);
-            InputStream stream = new FileInputStream(filename);
-            properties.loadFromXML(stream);
-            stream.close();
-            properties.list(System.out);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+    private void read(String filename) throws IOException{
+        System.out.println("read filename = " + filename);
+        InputStream stream = new FileInputStream(filename);
+        properties.loadFromXML(stream);
+        stream.close();
+        properties.list(System.out);
     }
 }
