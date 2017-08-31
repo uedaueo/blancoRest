@@ -744,6 +744,21 @@ public class BlancoRestXml2SourceFile {
         cgProcessorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileProsessorReturnLangdoc()));
 
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
+        BlancoCgType blancoCgType = new BlancoCgType();
+        blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
+        blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
+
+        BlancoCgException blancoCgException = new BlancoCgException();
+        blancoCgException.setType(blancoCgType);
+        blancoCgException.setDescription(fBundle.getXml2sourceFileDefaultExceptionLangdoc());
+
+        ArrayList<BlancoCgException> arrayBlancoCgException = new ArrayList<>();
+        arrayBlancoCgException.add(blancoCgException);
+
+        cgProcessorMethod.setThrowList(arrayBlancoCgException);
     }
 
     private void createExecuteMethod(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
@@ -789,6 +804,22 @@ public class BlancoRestXml2SourceFile {
         cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileExecutorReturnLangdoc()));
 
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
+        BlancoCgType blancoCgType = new BlancoCgType();
+        blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
+        blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
+
+        BlancoCgException blancoCgException = new BlancoCgException();
+        blancoCgException.setType(blancoCgType);
+        blancoCgException.setDescription(fBundle.getXml2sourceFileDefaultExceptionLangdoc());
+
+        ArrayList<BlancoCgException> arrayBlancoCgException = new ArrayList<>();
+        arrayBlancoCgException.add(blancoCgException);
+
+        cgExecutorMethod.setThrowList(arrayBlancoCgException);
+
         // メソッドの実装
         ListLine.add(
                 responseId + " " + BlancoCgLineUtil.getVariablePrefix(fTargetLang) + "ret" + responseSubId + " = "
@@ -828,6 +859,9 @@ public class BlancoRestXml2SourceFile {
         cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileExecutorReturnLangdoc()));
 
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
         BlancoCgType blancoCgType = new BlancoCgType();
         blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
         blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
