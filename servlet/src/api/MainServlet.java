@@ -223,7 +223,7 @@ public class MainServlet extends HttpServlet{
 		ApiBase.setSessionManager(sessionManagerImpl);
 	}
 
-	private void loadSettings() {
+	public void loadSettings() {
 
 		/*
 		 * web.xmlで定義されている初期パラメータを取得
