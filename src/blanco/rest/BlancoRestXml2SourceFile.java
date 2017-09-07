@@ -646,33 +646,37 @@ public class BlancoRestXml2SourceFile {
         /* ここからはAPIメソッドごとの生成 */
         for(int i = 0; i < 4; i++) {
 
+            String defaultApiRequestId = null;
+            String defaultApiResponseId = null;
+            switch (i) {
+                case 0:
+                    defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_REQUESTID;
+                    defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_RESPONSEID;
+                    break;
+                case 1:
+                    defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_REQUESTID;
+                    defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_RESPONSEID;
+                    break;
+                case 2:
+                    defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_REQUESTID;
+                    defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_RESPONSEID;
+                    break;
+                case 3:
+                    defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_REQUESTID;
+                    defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_RESPONSEID;
+                    break;
+            }
+
             if ((argListTelegrams[i][TELEGRAM_INPUT] != null) && (argListTelegrams[i][TELEGRAM_OUTPUT] != null)) {
                 //System.out.println("(process)### method = " + output.getTelegramMethod());
                 // API実装クラスで実装させる abstract method の定義
                 createAbstractMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
                 // base class からの abstract method の実装
-                createExecuteMethod(requestIdName[i], responseIdName[i], argListTelegrams[i]);
+                createExecuteMethod(requestIdName[i], responseIdName[i],
+                        defaultApiRequestId, defaultApiResponseId,
+                        argListTelegrams[i]);
             } else {
-                String defaultApiRequestId = null;
-                String defaultApiResponseId = null;
-                switch (i) {
-                    case 0:
-                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_REQUESTID;
-                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_GET_RESPONSEID;
-                        break;
-                    case 1:
-                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_REQUESTID;
-                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_POST_RESPONSEID;
-                        break;
-                    case 2:
-                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_REQUESTID;
-                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_PUT_RESPONSEID;
-                        break;
-                    case 3:
-                        defaultApiRequestId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_REQUESTID;
-                        defaultApiResponseId = BlancoRestConstants.VALUEOBJECT_PACKAGE + "." + BlancoRestConstants.DEFAULT_API_DELETE_RESPONSEID;
-                        break;
-                }
+
                 createExecuteMethodNotImplemented(requestIdName[i], responseIdName[i], defaultApiRequestId, defaultApiResponseId);
             }
         }
@@ -744,9 +748,27 @@ public class BlancoRestXml2SourceFile {
         cgProcessorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileProsessorReturnLangdoc()));
 
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
+        BlancoCgType blancoCgType = new BlancoCgType();
+        blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
+        blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
+
+        BlancoCgException blancoCgException = new BlancoCgException();
+        blancoCgException.setType(blancoCgType);
+        blancoCgException.setDescription(fBundle.getXml2sourceFileDefaultExceptionLangdoc());
+
+        ArrayList<BlancoCgException> arrayBlancoCgException = new ArrayList<>();
+        arrayBlancoCgException.add(blancoCgException);
+
+        cgProcessorMethod.setThrowList(arrayBlancoCgException);
     }
 
-    private void createExecuteMethod(String requestId, String responseId, BlancoRestTelegram[]  argListTelegrams) {
+    private void createExecuteMethod(String requestId, String responseId,
+                                     String defaultApiResquestId,
+                                     String defaultApiResponseId,
+                                     BlancoRestTelegram[]  argListTelegrams) {
         final BlancoCgMethod cgExecutorMethod = fCgFactory.createMethod(
                 BlancoRestConstants.BASE_EXECUTOR_METHOD, fBundle.getXml2sourceFileExecutorDescription());
         fCgClass.getMethodList().add(cgExecutorMethod);
@@ -777,17 +799,35 @@ public class BlancoRestXml2SourceFile {
 
         String requestSubId = requestId;
         String requestCastId = /*input.getPackage() + "." + */requestId;
+        // requestId = input.getTelegramSuperClass();
         /* ApiBaseのabstract methodで電文の親クラスを指定したので、ここでもそうする */
-        requestId = input.getTelegramSuperClass();
+        requestId = defaultApiResquestId;
         String responseSubId = responseId;
 //        responseId = output.getPackage() + "." + responseId;
-        responseId = output.getTelegramSuperClass();
+        // responseId = output.getTelegramSuperClass();
+        responseId = defaultApiResponseId;
         cgExecutorMethod.getParameterList().add(
                 fCgFactory.createParameter("arg" + requestSubId, requestId,
                         fBundle
                                 .getXml2sourceFileExecutorArgLangdoc()));
         cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileExecutorReturnLangdoc()));
+
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
+        BlancoCgType blancoCgType = new BlancoCgType();
+        blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
+        blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
+
+        BlancoCgException blancoCgException = new BlancoCgException();
+        blancoCgException.setType(blancoCgType);
+        blancoCgException.setDescription(fBundle.getXml2sourceFileDefaultExceptionLangdoc());
+
+        ArrayList<BlancoCgException> arrayBlancoCgException = new ArrayList<>();
+        arrayBlancoCgException.add(blancoCgException);
+
+        cgExecutorMethod.setThrowList(arrayBlancoCgException);
 
         // メソッドの実装
         ListLine.add(
@@ -828,6 +868,9 @@ public class BlancoRestXml2SourceFile {
         cgExecutorMethod.setReturn(fCgFactory.createReturn(responseId,
                 fBundle.getXml2sourceFileExecutorReturnLangdoc()));
 
+        /*
+         * デフォルトの例外（BlancoRestException）を throws に加える
+         */
         BlancoCgType blancoCgType = new BlancoCgType();
         blancoCgType.setName(BlancoRestConstants.DEFAULT_EXCEPTION);
         blancoCgType.setDescription(fBundle.getXml2sourceFileDefaultExceptionTypeLangdoc());
