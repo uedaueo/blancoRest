@@ -1,7 +1,5 @@
 package blanco.rest.common;
 
-import blanco.rest.common.LogLevel;
-import blanco.rest.common.Util;
 import blanco.rest.valueobject.*;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,12 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 
-import javax.xml.ws.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by haino on 2016/09/03.
@@ -53,7 +49,7 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
                 } else if ("status".equalsIgnoreCase(fieldEntry.getKey())) {
                     status = value.asText();
                 } else if ("errors".equalsIgnoreCase(fieldEntry.getKey())) {
-                    errors = this.parseErrrors(value);
+                    errors = this.parseErrors(value);
                 } else if ("telegram".equalsIgnoreCase(fieldEntry.getKey())) {
                     response = value;
                 }
@@ -103,7 +99,7 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
         return header;
     }
 
-    private ArrayList<ErrorItem> parseErrrors(JsonNode node) {
+    private ArrayList<ErrorItem> parseErrors(JsonNode node) {
         ArrayList<ErrorItem> errors = null;
 
         if (node.isArray()) {
@@ -120,22 +116,26 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
     private ErrorItem parseErrorItem(JsonNode node) {
         ErrorItem errorItem = new ErrorItem();
 
-        String code = null;
+        String code = "";
         ArrayList<String> messages = new ArrayList<>();
 
-        Iterator<Map.Entry<String,JsonNode>> fieldIte = node.fields();
-        while(fieldIte.hasNext()){
-            Map.Entry<String, JsonNode>fieldEntry = fieldIte.next();
+        Iterator<Map.Entry<String, JsonNode>> fieldIte = node.fields();
+        while (fieldIte.hasNext()) {
+            Map.Entry<String, JsonNode> fieldEntry = fieldIte.next();
             JsonNode value = fieldEntry.getValue();
-            if(value != null){
-                if("code".equalsIgnoreCase(fieldEntry.getKey())){
+            if (value != null) {
+                if ("code".equalsIgnoreCase(fieldEntry.getKey())) {
                     code = value.asText();
-                } else if ("messages".equalsIgnoreCase(fieldEntry.getKey())){
-                    value.isArray();
+                } else if ("messages".equalsIgnoreCase(fieldEntry.getKey())) {
+                    for (JsonNode m : value) {
+                        messages.add(m.asText());
+                    }
                 }
             }
         }
 
+        errorItem.setcode(code);
+        errorItem.setmessages(messages);
 
         return errorItem;
     }
