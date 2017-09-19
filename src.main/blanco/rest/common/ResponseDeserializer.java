@@ -61,6 +61,7 @@ public class ResponseDeserializer extends StdDeserializer<CommonResponse> {
         CommonResponse cr = new CommonResponse();
         cr.setinfo(info);
         cr.setstatus(status);
+        cr.seterrors(errors);
 
         ObjectMapper mapper = new ObjectMapper();
 
