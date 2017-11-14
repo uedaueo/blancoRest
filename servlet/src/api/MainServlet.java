@@ -4,6 +4,7 @@ import blanco.rest.BlancoRestConstants;
 import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.common.*;
 import blanco.rest.valueobject.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.*;
@@ -11,6 +12,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Random;
@@ -36,32 +38,35 @@ public class MainServlet extends HttpServlet{
 		this.createSessionManager();
 	}
 
-	
-	public void doGet(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
+	@Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response) {
 
 		this.actionDispatcher("GET", request, response);
 
 	}
 
-	public void doPost(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException {
+	@Override
+	public void doPost(HttpServletRequest request, HttpServletResponse response) {
 
 		this.actionDispatcher("POST", request, response);
 
 	}
 
-	public void doPut(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
+	@Override
+	public void doPut(HttpServletRequest request, HttpServletResponse response) {
 
 		this.actionDispatcher("PUT", request, response);
 
 	}
 
-	public void doDelete(HttpServletRequest request, HttpServletResponse response)throws ServletException,IOException	{
+	@Override
+	public void doDelete(HttpServletRequest request, HttpServletResponse response) {
 
 		this.actionDispatcher("DELETE", request, response);
 
 	}
 
-	private void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) {
 
 		try {
 			// API クラスのインスタンスを生成
@@ -132,14 +137,66 @@ public class MainServlet extends HttpServlet{
 			out.println(json);
 			out.close();
 
-		} catch (ClassNotFoundException e) {
+		}
+//		catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (InstantiationException e) {
+//			e.printStackTrace();
+//		} catch (IllegalAccessException e) {
+//			e.printStackTrace();
+//		} catch (BlancoRestException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		catch (Exception e) {
+			/* 全ての Exception をここで受けて, クライアントに必ず dismiss を返す */
+			Util.infoPrintln(LogLevel.LOG_EMERG,"[blancoRest] Critical Exception Occured!!!");
+
 			e.printStackTrace();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (BlancoRestException e) {
-			e.printStackTrace();
+
+			/*
+			 エラーメッセージの準備
+			 */
+			ErrorItem errorItem = new ErrorItem();
+			errorItem.setcode(e.getClass().getSimpleName());
+			ArrayList<String> msgs = new ArrayList<>();
+			msgs.add(e.getMessage());
+			errorItem.setmessages(msgs);
+
+			ArrayList<ErrorItem> errorItems = new ArrayList<>();
+			errorItems.add(errorItem);
+
+			/*
+			 とりあえずダミーのレスポンス
+			 */
+//			ApiTelegram telegramResponse = new ApiTelegram();
+
+			CommonResponse commonResponse = new CommonResponse();
+
+//			commonResponse.settelegram(telegramResponse);
+			commonResponse.setstatus(BlancoRestConstants.API_STATUS_DISMISS);
+			commonResponse.seterrors(errorItems);
+
+			long currentTimeMillis = System.currentTimeMillis();
+			String seed = "" + currentTimeMillis + random.nextDouble();
+			commonResponse.setinfo(new ResponseHeader());
+			commonResponse.getinfo().settoken(ApiBase.getSessionManager().renew("", seed));
+			commonResponse.getinfo().setlang("ja");
+
+			// Java → JSON に変換
+			try {
+				ObjectMapper mapper = new ObjectMapper();
+				String json = mapper.writeValueAsString(commonResponse);
+				Util.infoPrintln(LogLevel.LOG_DEBUG,"Java → JSON json = " + json);
+				response.setContentType("application/json;charset=UTF-8");
+				PrintWriter out = response.getWriter();
+				out.println(json);
+				out.close();
+			} catch (IOException ex) {
+				Util.infoPrintln(LogLevel.LOG_EMERG,"[blancoRest] Terrible Exception Occured!!! : " + ex.getMessage());
+				ex.printStackTrace();
+			}
 		}
 	}
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project name="BlancoRest" default="build" basedir=".">
-	<property name="version" value="0.0.3" />
+	<property name="version" value="0.0.4" />
 
 	<property name="project" value="blancoRest" />
 	<property name="project.lower" value="blancorest" />
