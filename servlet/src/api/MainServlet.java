@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
@@ -159,21 +160,35 @@ public class MainServlet extends HttpServlet{
 			 エラーメッセージの準備
 			 */
 			ErrorItem errorItem = new ErrorItem();
-			errorItem.setcode(e.getClass().getSimpleName());
 			ArrayList<String> msgs = new ArrayList<>();
-			msgs.add(e.getMessage());
-			errorItem.setmessages(msgs);
-
 			ArrayList<ErrorItem> errorItems = new ArrayList<>();
-			errorItems.add(errorItem);
 
 			/*
-			 とりあえずダミーのレスポンス
+			 xmlで ErrorCodeOnDismiss と ErrorMessageOnDismiss が
+			 設定されていた場合はそちらを優先する
 			 */
-//			ApiTelegram telegramResponse = new ApiTelegram();
+			String errorCodeOnDismiss = Config.properties.getProperty(Config.errorCodeOnDismissKey);
+			String errorMessageOnDismiss = Config.properties.getProperty(Config.errorMessageOnDismissKey);
+
+			if (errorCodeOnDismiss != null && errorMessageOnDismiss != null) {
+				errorItem.setcode(errorCodeOnDismiss);
+				msgs.add(errorMessageOnDismiss);
+				errorItem.setmessages(msgs);
+				errorItems.add(errorItem);
+			} else {
+				Util.infoPrintln(LogLevel.LOG_DEBUG, "[blancoRest] NO DISMISS ERROR DEFINED.");
+				errorItem.setcode(e.getClass().getSimpleName());
+				msgs.add(e.getMessage());
+				errorItem.setmessages(msgs);
+				errorItems.add(errorItem);
+			}
 
 			CommonResponse commonResponse = new CommonResponse();
 
+			/*
+			 ダミーのレスポンスはnullでないとJacksonエラーになる
+			 */
+//			ApiTelegram telegramResponse = new ApiTelegram();
 //			commonResponse.settelegram(telegramResponse);
 			commonResponse.setstatus(BlancoRestConstants.API_STATUS_DISMISS);
 			commonResponse.seterrors(errorItems);
