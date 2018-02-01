@@ -67,7 +67,7 @@ public class MainServlet extends HttpServlet{
 
 	}
 
-	private void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) {
+	protected void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) {
 
 		try {
 			// API クラスのインスタンスを生成
