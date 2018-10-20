@@ -57,10 +57,11 @@ public class Util {
 		int second = cal.get(Calendar.SECOND);    //(7)現在の秒を取得
 
 		String logThreshold = Config.properties.getProperty(Config.logLevelKey);
-		if (logThreshold == null)
-			logThreshold = "LOG_DEBUG";
+		if (logThreshold == null) {
+			logThreshold = Config.properties.getProperty("Loglevel", "LOG_DEBUG");
+		}
 
-		if (/*level.compareTo(LogLevel.valueOf(logThreshold)) <= 0*/true) {
+		if (level.compareTo(LogLevel.valueOf(logThreshold)) <= 0) {
 			String strLevel = null;
 			switch (level) {
 				case LOG_EMERG:

@@ -50,7 +50,7 @@ public class Config {
     //public static int connectionTimeout = 3;
 
     /** 簡易なログレベル */
-    public static final String logLevelKey = "Loglevel"; //"DEBUG";
+    public static final String logLevelKey = "LogLevel"; //"DEBUG";
 
     public static final String defaultPackageKey = "DefaultPackage";
 

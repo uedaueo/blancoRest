@@ -4,21 +4,22 @@ import blanco.rest.BlancoRestConstants;
 import blanco.rest.Exception.BlancoRestException;
 import blanco.rest.common.*;
 import blanco.rest.valueobject.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.servlet.*;
-import javax.servlet.http.*;
+
+import static blanco.rest.common.LogLevel.LOG_INFO;
 
 public class MainServlet extends HttpServlet{
 
@@ -67,7 +68,7 @@ public class MainServlet extends HttpServlet{
 
 	}
 
-	protected void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) {
+protected void actionDispatcher(String httpMethod, HttpServletRequest request, HttpServletResponse response) {
 
 		try {
 			// API クラスのインスタンスを生成
@@ -92,8 +93,13 @@ public class MainServlet extends HttpServlet{
 			CommonRequest commonRequest = createCommonRequest(jsonString, requestClassInstance);
 			Util.infoPrintln(LogLevel.LOG_DEBUG, "JSON → Java ms = " + commonRequest);
 
-			String token = commonRequest.getinfo().gettoken();
-			String lang = commonRequest.getinfo().getlang();
+			RequestHeader info = commonRequest.getinfo();
+			if (info == null) {
+				Util.infoPrintln(LOG_INFO, "NO REQUEST HEADER SPECIFIED. BLANK INSTANCE IS COMPLETED.");
+				info = new RequestHeader();
+			}
+			String token = info.gettoken();
+			String lang = info.getlang();
 
 			apiClassInstance.setRequest(commonRequest);
 			apiClassInstance.setResponse(new CommonResponse());
@@ -238,6 +244,17 @@ public class MainServlet extends HttpServlet{
 
 	private CommonRequest createCommonRequest(String jsonString, ApiTelegram requestClassInstance) throws IOException {
 
+		CommonRequest readValue = null;
+
+		if (jsonString == null || jsonString.length() == 0) {
+			/* payload または parameter に JSON 文字列が乗せられていなかった場合 */
+			Util.infoPrintln(LOG_INFO, "NO JSON STRING. BLANK FRAME IS COMPLETED !!!");
+			readValue = new CommonRequest();
+			readValue.setinfo(new RequestHeader());
+			readValue.settelegram(requestClassInstance);
+			return readValue;
+		}
+
 		ObjectMapper mapper = new ObjectMapper();
 		SimpleModule module = new SimpleModule();
 
@@ -246,11 +263,13 @@ public class MainServlet extends HttpServlet{
 
 		module.addDeserializer(CommonRequest.class, apiDeserializer);
 		mapper.registerModule(module);
-		CommonRequest readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
+		readValue = (CommonRequest) mapper.readValue(jsonString, CommonRequest.class);
 
 		if (readValue == null) {
 			Util.infoPrintln(LogLevel.LOG_ERR, "MainServlet#createCommonRequest: Fail to read CommonRequest. readValue returns null.");
 			readValue = new CommonRequest();
+			readValue.setinfo(new RequestHeader());
+			readValue.settelegram(requestClassInstance);
 		}
 
 		return readValue;
