@@ -22,7 +22,7 @@ public class SessionManagerImpl implements SessionManager{
             for (byte b : cipher_byte) {
                 sb.append(String.format("%02x", b & 0xff));
             }
-            System.out.println(sb);
+//            System.out.println(sb);
             return sb.toString();
         } catch (Exception e) {
             e.printStackTrace();
